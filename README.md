@@ -45,8 +45,11 @@ walrus rebinding a comprehension variable), `\N{…}` escapes, NFKC name
 identity, literal decoding, encoding cookies and BOMs are not implemented.
 [docs/progress.md](docs/progress.md) is the record of how each stage was built
 and what each oracle covers; `docs/evidence/` holds the corpus hashes and the
-comparisons against tree-sitter-python (`bench/`), which this package loses on
-time and memory — measured gaps, not a claim.
+comparisons against tree-sitter-python (`bench/`): a fresh-process outline of
+`inspect.py` takes 7.2 ms to tree-sitter's 10.8, eleven of fifteen standard
+library files read faster, and the four that do not are a few kilobytes each
+and lose by the process floor ([evidence](docs/evidence/python-outline-rows.json)).
+Memory is still tree-sitter's; incremental parsing is not here at all.
 
 ## Reading a file that does not parse
 
