@@ -1,9 +1,9 @@
-import self.names as nametable
-import self.packages.python.expressions
-import self.packages.python.statements
-import self.packages.python.lexer
-import self.parser
-import self.tree
+import gramide.names as nametable
+import self.expressions
+import self.statements
+import self.lexer
+import gramide.parser
+import gramide.tree
 import env
 import fs
 import json

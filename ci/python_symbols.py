@@ -1,7 +1,7 @@
 """Compare Python declaration names and source ranges against CPython AST."""
 from pathlib import Path
 import ast,json,subprocess,sysconfig,tempfile
-BIN=Path(__file__).resolve().parents[1]/'gramide'
+BIN=Path(__file__).resolve().parents[1]/'gramide_python'
 
 def expected(source):
     lines=source.splitlines(keepends=True)

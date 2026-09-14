@@ -40,4 +40,4 @@ jobs:
       - name: Tests, build and CLI smoke
         env:
           ALMIDE_BIN: ${{ github.workspace }}/.ci/almide/target/release/almide
-        run: bash ci/check.sh
+        run: PYTHON=python bash ci/check.sh

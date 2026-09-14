@@ -1,6 +1,6 @@
 """CPython oracle for the Python layout stage, not a full Python lexer claim."""
 from pathlib import Path
-import io,json,os,platform,re,shutil,subprocess,tempfile,tokenize
+import io,json,os,platform,re,subprocess,tempfile,tokenize
 ROOT=Path(__file__).resolve().parents[1]
 # Strings are already indivisible physical tokens at the layout interface.
 VALID=[
@@ -89,15 +89,10 @@ for i,left in enumerate(spellings):
 INVALID.append(('too_many_brackets','x = '+('('*201)+'1'+(')'*201)+'\n'))
 INVALID.append(('too_many_indents',''.join(' '*i+'if True:\n' for i in range(101))+' '*101+'x = 1\n'))
 with tempfile.TemporaryDirectory() as tmp:
-    project=Path(tmp);(project/'src/packages/python').mkdir(parents=True)
-    for file in ['tree.almd','names.almd','lex.almd','packages/python/layout.almd']:
-        shutil.copyfile(ROOT/'src'/file,project/'src'/file)
-    shutil.copyfile(ROOT/'ci/python_layout_probe.almd',project/'src/main.almd')
-    (project/'almide.toml').write_text('[package]\nname = "layout_probe"\nversion = "0.1.0"\nedition = "2026"\n')
-    binary=project/'probe'
-    subprocess.run([os.environ.get('ALMIDE_BIN','almide'),'build','-o',str(binary)],cwd=project,check=True)
+    binary=Path(tmp)/'probe';data=Path(tmp)/'cases.json'
+    subprocess.run([os.environ.get('ALMIDE_BIN','almide'),'build','ci/python_layout_probe.almd','-o',str(binary)],cwd=ROOT,check=True)
     valid=[reference_case(*row) for row in VALID];invalid=[plain_case(*row) for row in INVALID]
-    cases=[row[0] for row in valid+invalid];data=project/'cases.json';data.write_text(json.dumps({'cases':cases},ensure_ascii=False))
+    cases=[row[0] for row in valid+invalid];data.write_text(json.dumps({'cases':cases},ensure_ascii=False))
     result=json.loads(subprocess.check_output([str(binary),str(data)],text=True))
     for (case,expected),actual in zip(valid,result):
         assert actual['ok'],(case['name'],actual)

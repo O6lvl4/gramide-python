@@ -1,7 +1,7 @@
 """Deferred fallback diagnostics retain the original physical byte position."""
 from pathlib import Path
 import subprocess,tempfile
-BIN=Path(__file__).resolve().parents[1]/'gramide'
+BIN=Path(__file__).resolve().parents[1]/'gramide_python'
 cases=[
  ('$',1,1,'unexpected Python character'),
  ('  $',1,3,'unexpected Python character'),

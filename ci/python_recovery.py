@@ -1,7 +1,7 @@
 """Python logical-line recovery preserves scope and never certifies partial trees."""
 from pathlib import Path
 import ast,subprocess,tempfile
-BIN=Path(__file__).resolve().parents[1]/'gramide'
+BIN=Path(__file__).resolve().parents[1]/'gramide_python'
 def run(cmd,path):return subprocess.run([str(BIN),cmd,str(path)],capture_output=True,text=True,timeout=10)
 count=0
 with tempfile.TemporaryDirectory() as tmp:

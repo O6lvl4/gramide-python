@@ -10,7 +10,7 @@ adding it later is a diff here rather than a surprise.
 from pathlib import Path
 import subprocess, tempfile
 
-BIN = Path(__file__).resolve().parents[1] / "gramide"
+BIN = Path(__file__).resolve().parents[1] / "gramide_python"
 
 COVERED = [
  ("a plain call", "def f():\n    return helper(1)\n",

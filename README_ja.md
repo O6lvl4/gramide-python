@@ -1,111 +1,80 @@
-# gramide
+# gramide-python
 
-コーディングエージェントのための構文木。[Almide](https://github.com/almide/almide) で書かれています。
-`gramide` はソースファイルを、エージェントが問い合わせられる木にします。このファイルはまだパースできるか、
-各宣言はどこから始まりどこで終わるか、このノードの名前は何か。文法は言語の普通の値で、パーサはそれを
-解釈します。生成ステップも、エージェントと木の間に挟まるネイティブライブラリもありません。
+[gramide-cli](https://github.com/O6lvl4/gramide-cli) の Python 3.14。自前の字句解析器、値としての文法、
+その文法をコンパイルした表、どのノードが名前を宣言するかの規則、そして編集途中のファイルにも
+読み手が答えられるようにする回復。ひとつの Almide パッケージ `gramide_python` で、依存は
+[gramide](https://github.com/O6lvl4/gramide) だけです。`gramide` コマンド（[gramide-cli](https://github.com/O6lvl4/gramide-cli)）はこれを出荷し、
+このリポジトリはこれ単体を CPython と照合し、計測し、リリースする場所です。
 
 [English](README.md)
 
 ```
-gramide check   src/main.almd     パースできれば exit 0、失敗なら `file:line:col: unexpected X (expected …)`
-gramide check   src/*.almd        ファイルは何個でも: 文法のコンパイルはファイルごとではなく一度だけ
-gramide outline src/main.almd     宣言ごとに一行: `L12-40 function parse`。メソッドは型付きで
-                                  `L82-89 method Applicability::as_str`
-                                  パースできないファイルでも、読めた部分のアウトラインは出る
-gramide parse   src/main.almd     木全体を S 式で
-gramide tags    src/main.almd     `def function parse L40-58`、`ref call list.map L44`、`ref type Node L12` — リポジトリマップの入力
-gramide tokens  src/main.almd     トークン列を一行ずつ
-gramide map . --budget 1024 --task "fix parse_rule"
-                                  トークン予算内に収めたリポジトリの地図: 他ファイルから最も使われる定義を、
-                                  タスクが言及するものへ寄せて順位付け — エージェントがファイルを開く前に読むもの
+almide build cli/main.almd -o gramide_python       # .py と .pyi だけの gramide
+./gramide_python check $(python3.14 -c 'import sysconfig;print(sysconfig.get_path("stdlib"))')/*.py
+./gramide_python outline inspect.py                # `L2-3 method A.m`。入れ子は `Outer.Inner.method`
+./gramide_python symbols-recovered editing.py      # 壊れていない宣言と、壊れている場所
+./gramide_python gen-table > src/table.almd        # 文法を変えたら
 ```
 
-## なぜ
+## カバー範囲
 
-コードを編集するエージェントがパーサに求めるものは二つです。「いま壊したか」への速くて正直な答えと、
-必要な部分だけ読むための「何がどこにあるか」の地図。コンパイラのフロントエンド全体は要らないし、
-触る言語ごとに別のネイティブライブラリを要求すべきでもありません。gramide はその二つの答えを、
-エージェントのツールと同じ言語で返す最小のものです。文法を他のモジュールと同じように読み、直し、
-テストできます。
+パッケージはコミット `23116f998f6789d8c2fbe5ed5b8146854c8c2a4f` の CPython v3.14.4 の文法と
+字句解析器に従い、そのすべてを `ci/` のオラクルで CPython 3.14 自身（tokenizer、`ast`、コンパイラ、
+Unicode 16 の表）と照合しています。このリリースで `bash ci/check.sh` が検証するもの:
 
-## 現状
-
-2 言語: Almide（`.almd`）と Go（`.go`）。それぞれ参照コーパス全体で計測し、保証はどちらも同じで一方向です。
-**gramide が拒否するファイルは参照パーサにとっても壊れている。** 逆は約束しません。既知の箇所で
-コンパイラより寛容で、一覧は [docs/design.md](docs/design.md)。
-
-**Almide** — Almide リポジトリの全 `.almd` ファイル（意図的に非 Almide 構文を試す 2 ディレクトリを除いた 3,382 ファイル）:
-
-| ファイル | 結果 |
+| 段階 | CPython 3.14 との照合 |
 |---|---|
-| 正しい 3,317 ファイル | すべてパース |
-| `broken.almd` 診断フィクスチャ 65 | すべて拒否。いずれもコンパイラも拒否する |
-| その他の `broken.almd` 720 | パースは通り、意図どおり型検査で落ちる |
+| レイアウト（indent/dedent スタック、タブ、formfeed、行継続、括弧） | 有効 25 ケース、拒否 51 ケース |
+| 通常文字列の境界 | 2,020 境界と拒否 12 |
+| 数値 | 650 境界と拒否 32 |
+| 識別子 | 全 1,114,112 コードポイントの両クラスと UTF-8 スキャン 38 |
+| f-string・t-string を含む字句解析器全体 | 受理 409、拒否 11、標準ライブラリ 12 ファイルをトークン単位で |
+| 式 | AST 構造一致 2,993、拒否 3,037 |
+| 文・宣言・match パターン | 木の一致 857、拒否 1,600、標準ライブラリ 12 ファイル完全版を本体まで |
+| 宣言の名前・所有者・範囲 | 入れ子・デコレータ付き・async・スタブ・12 ファイルにわたる 645 宣言 |
+| 定義と参照（`tags`） | 報告するケース 12、意図的に報告しないケース 6 |
+| 回復: 論理行、文字列、補間、括弧、孤立エラー | 55・163・239・160・102 ケース。いずれも厳密な `check` は拒否のまま |
 
-**Go** — Go 1.27 の `GOROOT/src` 配下の全 `.go` ファイル（標準ライブラリ・コンパイラ・ツールチェーン、testdata 込みで 8,077 ファイル）:
+`check` は文法検査であって、CPython がそのファイルをコンパイルできる保証ではありません。
+コンパイラ文脈の規則（重複パラメータ、`async` 外の `await`、内包変数を束縛し直す walrus）、
+`\N{…}` エスケープ、NFKC の名前同一性、リテラルの復号、エンコーディングクッキーと BOM は
+未実装です。[docs/progress.md](docs/progress.md) は各段階をどう作り、各オラクルが何を
+カバーするかの記録で、`docs/evidence/` にはコーパスのハッシュと tree-sitter-python との比較
+（`bench/`）があります。時間もメモリもこのパッケージが負けています — 計測済みの差であって、
+主張ではありません。
 
-| ファイル | 結果 |
-|---|---|
-| 8,042 ファイル | すべてパース |
-| 35 ファイル（すべて `testdata`） | 拒否。いずれも `gofmt -e` も拒否する |
-| `gofmt` が拒否する `testdata` 11 ファイル | パースは通る（ここでは gramide のほうが寛容） |
+## パースできないファイルを読む
 
-コーパス全体の `check`（2,000 ファイルごとに 1 プロセス＝カーネルの引数上限、つまり
-`gramide check src/*.go` と同じ形）: Almide リポジトリの `.almd` 4,105 ファイルが
-**0.118 秒**（42 MB/s）、`GOROOT/src` の `.go` 全 7,702 ファイル・90.2 MB が
-**0.695 秒**（130 MB/s）。最大の `cmd/compile/internal/ssa/opGen.go`（生成 96,689 行）
-単体で **64 ミリ秒**。計測は `bench/corpus_check.py`。
+`symbols-recovered` を提供するパッケージです。厳密な `symbols` がファイルを拒否したときに
+[hew](https://github.com/O6lvl4/hew) が使う契約。失敗した文は同じインデントの次の論理行まで、
+未終端の文字列や f-string はそれを閉じる行末まで、閉じていない括弧はファイル末尾まで、迷子の
+`)` や `$` はその行末までスキップし、スキップした範囲はそれぞれ `ERROR` ノードになります。
+文書には byte 範囲がエラーと交差しない宣言だけを、その範囲とともに列挙します。読み手は損傷の
+両側にある無傷のメソッドを選べ、壊れたヘッダの下で無傷に見える宣言を選ぶことは決してありません。
+書きかけの宣言ヘッダは決して出力しません。このパッケージだけがこの機能を掲げ、他はまだ掲げない
+理由がそれです。
 
-## 仕組み
+## 書き方
 
-```
-source ──lexer──▶ tokens ──parser(grammar)──▶ tree ──▶ check / outline / parse
-```
+- **`src/lexer.almd`** と `layout`・`strings`・`interpolation`・`escapes`・`numbers`・
+  `identifiers`・`identifier_data` — CPython の `Parser/lexer` に沿ってモジュールごとに書いた
+  字句解析器。物理トークン、次にそれを CPython のインデントと代替インデントのスタックで論理的な
+  `newline`・`indent`・`dedent` マーカーに変えるレイアウト段階、f/t-string のモードスタック、
+  CPython 自身の表から `scripts/gen_python_identifiers.py` が生成する Unicode 16 の識別子クラス。
+- **`src/grammar.almd`** は `statements`・`compounds`・`declarations`・`patterns`・`expressions`・
+  `containers`・`comprehensions`・`lambdas`・`parameters`・`arguments`・`string_expressions` に
+  またがって組まれた文法の入口を名指しします。それぞれ `Grammar/python.gram` の対応する節に
+  従います。文のリストはエンジンの `recover_lines` を使います。
+- **`src/symbols.almd`** — 関数・クラス・型エイリアスが名前を宣言し、クラスがメソッドを所有し、
+  入れ子の宣言は語彙的なパス `Outer.Inner.method` を持つので、hew が同名の宣言を選べます。
+- **`src/table.almd`** — `gen-table` の生成物。古ければ CI が落ちます。
 
-- **`src/lex.almd`** — 同梱言語で共用するバイト列字句解析。言語が渡すのは `Spec` です。キーワード、
-  演算子、コメント記号、改行の意味、そして表では書けない 2 つ（数値の書き方と文字列リテラルの終わり方）
-  に対する族の指定。Go の字句解析はこの spec 32 行です。
-- **`src/parser.almd`** — エンジン。文法は `Grammar { start, rules }` で、規則は `Rule` 値
-  （`Tok`, `Lit`, `Seq`, `Alt`, `Rep`, `Opt`, `Wrap`, `Field`, `Left`, 先読み）。順序付き選択、
-  貪欲な繰り返し、左再帰なし。二項演算子は `Left(kind, operand, op)` で、マッチ後に左畳み込み。
-  パーサは失敗した最遠のトークンとそこで期待していたものを覚えていて、それが `check` の出すエラー。
-- **`src/packages/gramide_almide.almd`**, **`src/packages/gramide_go.almd`**, **`src/packages/gramide_rust.almd`** — 1 ファイルで 1 言語。字句解析の spec と文法を
-  どちらも値として持ちます。Go 文法は式の梯子を一つの関数から 2 回（末尾の複合リテラルあり・なし）生成し、
-  `if x == T{…} {` の曖昧さを避けています。セミコロン挿入は spec の `NL_SEMI` 指定だけで、
-  文法は Go が区切りと見る場所にしか区切りを見ません。
-- **`src/tree.almd`** — トークン添字で範囲を持つ `Node { kind, field, start, end, kids }` と、
-  `child(n, "name")`, `text_of`, `sexp`, `collect`。
-- **`src/tags.almd`**, **`src/map.almd`** — ファイルごとの定義と参照、そしてリポジトリの地図。
-  他ファイルが定義する名前への参照を辺にし、タスクへ個人化した PageRank で定義を順位付けし、
-  予算が尽きるまでファイル単位で描画する。
+## 検査
 
-エンジンについて一つ。文法の値は起動時に 3 整数ノードの平坦な配列へコンパイルされ、`parse_rule` は
-一つの自己再帰関数で、列・選択・繰り返しのループはその中にあります。どちらの形も Almide のネイティブ
-バックエンドが値をコピーする仕方から来ていて、[docs/design.md](docs/design.md) に各規則とそれを強いた
-計測を記録しています（その一つで 11.6 万行の生成 Go ファイルが 188 秒から 7.6 秒に。
-Go 1.26 で最大の同種ファイルは現在 64 ミリ秒）。
-
-## ビルド
-
-```
-almide build            # → ./gramide
-almide test             # 言語パッケージ契約のテストを含む
-```
-
-Almide 0.61 以降が必要です。
+`bash ci/check.sh` には CPython 3.14 が必要です（`python3` が別の版なら `PYTHON=python3.14`。
+スクリプトは他の版ではオラクルを走らせず、理由を言います）。`almide test`、表の一致検査、
+バイナリのスモーク、上の表のすべてのオラクルを走らせます（[ci/README.md](ci/README.md)）。
 
 ## ライセンス
 
 MIT または Apache-2.0、お好みで。
-
-## 言語パッケージ
-
-`gramide languages` は登録済みパッケージ・拡張子・機能をバージョン付き JSON で返します。
-`gramide-almide`・`gramide-go`・`gramide-rust`・`gramide-python` が字句解析ファクトリ・文法・
-シンボル規則を持ち、ホストは対象ファイルに必要なパッケージだけをロードします。独自の字句解析器も
-渡せるため、インデントに意味のある言語を共通 lexer の制約に押し込めずに追加できます
-（Python のレイアウト解析がそれです）。
-
-現在は同一リポジトリ内の静的モジュールです。個別インストールと動的ロードは未実装です。
-[契約と Python の設計チェックポイント](docs/language-packages.md) を参照してください。

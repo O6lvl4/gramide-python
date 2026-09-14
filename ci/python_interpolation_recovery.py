@@ -6,7 +6,7 @@ import re
 import subprocess
 import tempfile
 
-BIN = Path(__file__).resolve().parents[1]/'gramide'
+BIN = Path(__file__).resolve().parents[1]/'gramide_python'
 count = 0
 
 

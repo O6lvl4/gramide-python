@@ -1,4 +1,4 @@
-import self.packages.python.strings
+import self.strings
 import env
 import fs
 import json

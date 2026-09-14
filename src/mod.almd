@@ -1,0 +1,32 @@
+// gramide_python — Python 3.14 for gramide: what the package hands the host.
+//
+// The lexer is src/lexer.almd and the layout, string, number and identifier
+// scanners beside it; the grammar is spread over src/statements.almd and the
+// modules it composes, and src/grammar.almd names its entry; src/symbols.almd
+// says which nodes declare a name; src/table.almd is the grammar compiled,
+// which is what a binary reads. `definition()` is the whole contract.
+import gramide.package_api
+import gramide.tree
+import gramide.lex
+import gramide.parser
+import self.lexer
+import self.string_expressions
+import self.symbols
+import self.table
+
+let VERSION = "0.1.0"
+
+fn scan(source: String, recovering: Bool) -> Result[List[tree.Token], lex.LexError] = {
+  let tokens = lexer.scan_source_with(source, recovering)!
+  string_expressions.prepare(bytes.from_string(source), tokens) |> result.map_err((f) => lex.LexError {
+    line: f.line, col: f.col, message: parser.format_failure(f)
+  })
+}
+
+fn prepare_lexer() -> package_api.Tokenizer = (source, recovering) => scan(source, recovering)
+
+fn definition() -> package_api.Definition = package_api.Definition {
+  id: "python", package_name: "gramide-python", version: VERSION, extensions: [".py", ".pyi"],
+  capabilities: ["check", "tokens", "parse", "outline", "symbols", "symbols-recovered", "tags", "map"],
+  lexer: () => prepare_lexer(), grammar: () => table.compiled(), sep: ".", symbols: symbols.symbol_rules()
+}

@@ -1,4 +1,4 @@
-import self.packages.python.numbers
+import self.numbers
 import env
 import fs
 import json

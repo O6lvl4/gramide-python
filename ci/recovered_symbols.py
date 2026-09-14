@@ -1,7 +1,7 @@
 """Explicit recovered-symbol contract; never include declarations covering errors."""
 from pathlib import Path
 import json,subprocess,tempfile
-BIN=Path(__file__).resolve().parents[1]/'gramide'
+BIN=Path(__file__).resolve().parents[1]/'gramide_python'
 with tempfile.TemporaryDirectory() as tmp:
  p=Path(tmp)/'editing.py'
  cases=[

@@ -1,6 +1,6 @@
 """Compare ordinary string token boundaries against CPython, including UTF-8 offsets."""
 from pathlib import Path
-import io,json,os,platform,shutil,subprocess,tempfile,tokenize
+import io,json,os,platform,subprocess,tempfile,tokenize
 ROOT=Path(__file__).resolve().parents[1]
 prefixes=['','r','R','u','U','b','B','br','bR','Br','BR','rb','rB','Rb','RB']
 quotes=['"',"'",'"""',"'''"]
@@ -35,14 +35,9 @@ for source in invalid:
     else:raise AssertionError(('CPython accepted invalid fixture',source))
     cases.append({'source':source,'start':0});expected.append(None)
 with tempfile.TemporaryDirectory() as tmp:
-    project=Path(tmp);(project/'src/packages/python').mkdir(parents=True)
-    for file in ['tree.almd','names.almd','lex.almd','packages/python/strings.almd']:
-        shutil.copyfile(ROOT/'src'/file,project/'src'/file)
-    shutil.copyfile(ROOT/'ci/python_strings_probe.almd',project/'src/main.almd')
-    (project/'almide.toml').write_text('[package]\nname = "strings_probe"\nversion = "0.1.0"\nedition = "2026"\n')
-    binary=project/'probe'
-    subprocess.run([os.environ.get('ALMIDE_BIN','almide'),'build','-o',str(binary)],cwd=project,check=True)
-    data=project/'cases.json';data.write_text(json.dumps({'cases':cases},ensure_ascii=False))
+    binary=Path(tmp)/'probe';data=Path(tmp)/'cases.json'
+    subprocess.run([os.environ.get('ALMIDE_BIN','almide'),'build','ci/python_strings_probe.almd','-o',str(binary)],cwd=ROOT,check=True)
+    data.write_text(json.dumps({'cases':cases},ensure_ascii=False))
     result=json.loads(subprocess.check_output([str(binary),str(data)],text=True))
     assert len(result)==len(expected)
     for case,want,actual in zip(cases,expected,result):

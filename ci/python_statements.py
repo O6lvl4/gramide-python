@@ -1,6 +1,6 @@
 """Compare statement structure and syntax rejection with CPython."""
 from pathlib import Path
-import ast,hashlib,itertools,json,os,platform,shutil,subprocess,sys,sysconfig,tempfile,warnings
+import ast,hashlib,itertools,json,os,platform,subprocess,sys,sysconfig,tempfile,warnings
 from python_ast import reference,actual,OP,decode_tree
 warnings.simplefilter('ignore',SyntaxWarning)
 ROOT=Path(__file__).resolve().parents[1]
@@ -287,13 +287,8 @@ def act_stmt(n):
     raise AssertionError(n)
 
 with tempfile.TemporaryDirectory() as tmp:
-    project=Path(tmp);(project/'src/packages').mkdir(parents=True)
-    shutil.copytree(ROOT/'src/packages/python',project/'src/packages/python')
-    for name in ['tree.almd','names.almd','lex.almd','parser.almd']:shutil.copyfile(ROOT/'src'/name,project/'src'/name)
-    shutil.copyfile(ROOT/'ci/python_statements_probe.almd',project/'src/main.almd')
-    (project/'almide.toml').write_text('[package]\nname = "statements_probe"\nversion = "0.1.0"\nedition = "2026"\n')
-    binary=project/'probe';data=project/'cases.json'
-    subprocess.run([os.environ.get('ALMIDE_BIN','almide'),'build','-o',str(binary)],cwd=project,check=True)
+    binary=Path(tmp)/'probe';data=Path(tmp)/'cases.json'
+    subprocess.run([os.environ.get('ALMIDE_BIN','almide'),'build','ci/python_statements_probe.almd','-o',str(binary)],cwd=ROOT,check=True)
     expected=[[ref_stmt(n,s) for n in ast.parse(s).body] for s in VALID]
     for s in INVALID:
         try:ast.parse(s)

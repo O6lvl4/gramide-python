@@ -1,6 +1,6 @@
 // Test-only adapter: production layout code consumes tokens, never Python JSON.
-import self.packages.python.layout
-import self.tree
+import self.layout
+import gramide.tree
 import env
 import fs
 import json

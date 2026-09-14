@@ -2,7 +2,7 @@
 from pathlib import Path
 import warnings
 warnings.simplefilter("ignore", SyntaxWarning)
-import ast,itertools,json,os,platform,shutil,subprocess,tempfile,keyword,hashlib,sys
+import ast,itertools,json,os,platform,subprocess,tempfile,keyword,hashlib,sys
 ROOT=Path(__file__).resolve().parents[1]
 OPS=['+','-','*','/','//','%','@','**','<<','>>','&','^','|','and','or','==','!=','<','<=','>','>=','in','not in','is','is not']
 VALID=[f'a {left} b {right} c' for left,right in itertools.product(OPS,repeat=2)]
@@ -120,13 +120,8 @@ for source in [r'f"\x{x}"',r'f"{x:>\x}"',r't"{x:>\U00110000}"',r'fr"{x:>\x}"',
     else:VALID.append(source)
 from python_ast import reference,actual,decode_tree
 with tempfile.TemporaryDirectory() as tmp:
-    project=Path(tmp);(project/'src/packages').mkdir(parents=True)
-    shutil.copytree(ROOT/'src/packages/python',project/'src/packages/python')
-    for file in ['tree.almd','names.almd','lex.almd','parser.almd']:shutil.copyfile(ROOT/'src'/file,project/'src'/file)
-    shutil.copyfile(ROOT/'ci/python_expressions_probe.almd',project/'src/main.almd')
-    (project/'almide.toml').write_text('[package]\nname = "expressions_probe"\nversion = "0.1.0"\nedition = "2026"\n')
-    binary=project/'probe';data=project/'cases.json'
-    subprocess.run([os.environ.get('ALMIDE_BIN','almide'),'build','-o',str(binary)],cwd=project,check=True)
+    binary=Path(tmp)/'probe';data=Path(tmp)/'cases.json'
+    subprocess.run([os.environ.get('ALMIDE_BIN','almide'),'build','ci/python_expressions_probe.almd','-o',str(binary)],cwd=ROOT,check=True)
     expected=[reference(ast.parse(s,mode='eval').body,s) for s in VALID]
     for s in INVALID:
         try:ast.parse(s,mode='eval')

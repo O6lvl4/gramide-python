@@ -1,7 +1,7 @@
 """Recover ordinary-string boundaries without inventing declarations in literals."""
 from pathlib import Path
 import subprocess,tempfile
-BIN=Path(__file__).resolve().parents[1]/'gramide'
+BIN=Path(__file__).resolve().parents[1]/'gramide_python'
 def run(cmd,p):return subprocess.run([str(BIN),cmd,str(p)],capture_output=True,text=True,timeout=10)
 count=0
 with tempfile.TemporaryDirectory() as tmp:

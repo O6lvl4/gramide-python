@@ -1,0 +1,7 @@
+// grammar — the entry to the Python grammar, which is composed across
+// src/statements.almd, src/expressions.almd and the modules they import. This
+// is what `gen-table` compiles into src/table.almd.
+import gramide.parser
+import self.statements
+
+fn rules() -> parser.Grammar = statements.file_grammar()

@@ -1,6 +1,6 @@
 // Test-only adapter: production layout code consumes tokens, never Python JSON.
-import self.packages.python.lexer
-import self.tree
+import self.lexer
+import gramide.tree
 import env
 import fs
 import json

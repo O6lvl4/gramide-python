@@ -1,4 +1,4 @@
-import self.packages.python.identifiers
+import self.identifiers
 import env
 import fs
 import json

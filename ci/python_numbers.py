@@ -1,6 +1,6 @@
 """CPython compiler acceptance plus tokenizer byte endpoints for numeric literals."""
 from pathlib import Path
-import io,json,os,platform,shutil,subprocess,tempfile,tokenize,warnings
+import io,json,os,platform,subprocess,tempfile,tokenize,warnings
 ROOT=Path(__file__).resolve().parents[1]
 valid=set(['0','00','0_0','123','1_234','.5','1.','01.2','01e2','01j','1e999','1e-999'])
 for base,digits in [('b','10101'),('o','76543'),('x','aB09F')]:
@@ -33,14 +33,9 @@ for source in invalid:
     else:raise AssertionError(('CPython accepts invalid fixture',source))
     cases.append(dict(source=source,start=0));expected.append(None)
 with tempfile.TemporaryDirectory() as tmp:
-    project=Path(tmp);(project/'src/packages/python').mkdir(parents=True)
-    for file in ['tree.almd','names.almd','lex.almd','packages/python/numbers.almd']:
-        shutil.copyfile(ROOT/'src'/file,project/'src'/file)
-    shutil.copyfile(ROOT/'ci/python_numbers_probe.almd',project/'src/main.almd')
-    (project/'almide.toml').write_text('[package]\nname = "numbers_probe"\nversion = "0.1.0"\nedition = "2026"\n')
-    binary=project/'probe'
-    subprocess.run([os.environ.get('ALMIDE_BIN','almide'),'build','-o',str(binary)],cwd=project,check=True)
-    data=project/'cases.json';data.write_text(json.dumps({'cases':cases},ensure_ascii=False))
+    binary=Path(tmp)/'probe';data=Path(tmp)/'cases.json'
+    subprocess.run([os.environ.get('ALMIDE_BIN','almide'),'build','ci/python_numbers_probe.almd','-o',str(binary)],cwd=ROOT,check=True)
+    data.write_text(json.dumps({'cases':cases},ensure_ascii=False))
     result=json.loads(subprocess.check_output([str(binary),str(data)],text=True))
     assert len(result)==len(expected)
     for case,want,actual in zip(cases,expected,result):

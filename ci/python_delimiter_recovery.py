@@ -1,7 +1,7 @@
 """EOF recovery keeps the unmatched delimiter's logical line opaque."""
 from pathlib import Path
 import ast,json,re,subprocess,tempfile
-BIN=Path(__file__).resolve().parents[1]/'gramide'
+BIN=Path(__file__).resolve().parents[1]/'gramide_python'
 count=0
 
 def run(command,path):
