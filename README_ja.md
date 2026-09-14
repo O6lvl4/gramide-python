@@ -40,8 +40,8 @@ Unicode 16 の表）と照合しています。このリリースで `bash ci/ch
 `\N{…}` エスケープ、NFKC の名前同一性、リテラルの復号、エンコーディングクッキーと BOM は
 未実装です。[docs/progress.md](docs/progress.md) は各段階をどう作り、各オラクルが何を
 カバーするかの記録で、`docs/evidence/` にはコーパスのハッシュと tree-sitter-python との比較
-（`bench/`）があります。新規プロセスでの `inspect.py` のアウトラインは 7.2 ミリ秒対 tree-sitter の
-10.8 ミリ秒、標準ライブラリ 15 ファイル中 11 で速く、負ける 4 つは数 KB のファイルでプロセスの床の
+（`bench/`）があります。新規プロセスでの `inspect.py` のアウトラインは tree-sitter の 0.70 倍の時間、
+標準ライブラリ 15 ファイル中 11 で速く、負ける 4 つは数 KB のファイルで、負荷時のプロセスの床の
 差です（[証拠](docs/evidence/python-outline-rows.json)）。メモリは今も tree-sitter が上で、
 インクリメンタルパースはありません。
 
