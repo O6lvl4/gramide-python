@@ -14,9 +14,9 @@ import self.string_expressions
 import self.symbols
 import self.table
 
-let VERSION = "0.1.6"
+let VERSION = "0.1.7"
 
-fn scan(source: String, recovering: Bool, prepared: lexer.ScanTables) -> Result[List[tree.Token], lex.LexError] = {
+fn scan(source: String, recovering: Bool, prepared: lexer.PythonTables) -> Result[List[tree.Token], lex.LexError] = {
   let tokens = lexer.scan_prepared(source, recovering, prepared)!
   string_expressions.prepare(bytes.from_string(source), tokens) |> result.map_err((f) => lex.LexError {
     line: f.line, col: f.col, message: parser.format_failure(f)
