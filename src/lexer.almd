@@ -126,11 +126,16 @@ fn frame_mode(frame: Option[interpolation.Frame]) -> Int = match frame {
   }
 }
 
-fn physical_with(source: String, recovering: Bool) -> Result[List[tree.Token], lex.LexError] = {
+// The tables the scanner reads: built once per process (`prepare`), not
+// once per call, since a keystroke re-lexes one statement at a time.
+type ScanTables = { classes: identifiers.Tables, ops: Operators }
+fn prepare() -> ScanTables = ScanTables { classes: identifiers.unicode_tables(), ops: operators() }
+fn physical_with(source: String, recovering: Bool) -> Result[List[tree.Token], lex.LexError] = physical_prepared(source, recovering, prepare())
+fn physical_prepared(source: String, recovering: Bool, prepared: ScanTables) -> Result[List[tree.Token], lex.LexError] = {
   guard not string.contains(source, "\u{0000}") else err(lex.LexError { line: 1, col: 1, message: "source code cannot contain null bytes" })
   let buffer = bytes.from_string(source)
-  let classes = identifiers.unicode_tables()
-  let ops = operators()
+  let classes = prepared.classes
+  let ops = prepared.ops
   var tokens: List[tree.Token] = []
   var frames: List[interpolation.Frame] = []
   var checkpoint = 0
@@ -291,6 +296,7 @@ fn physical_with(source: String, recovering: Bool) -> Result[List[tree.Token], l
 }
 fn physical(source: String) -> Result[List[tree.Token], lex.LexError] = physical_with(source, false)
 fn scan_source_with(source: String, recovering: Bool) -> Result[List[tree.Token], lex.LexError] = layout.apply_with(source, physical_with(source, recovering)!, recovering)
+fn scan_prepared(source: String, recovering: Bool, prepared: ScanTables) -> Result[List[tree.Token], lex.LexError] = layout.apply_with(source, physical_prepared(source, recovering, prepared)!, recovering)
 fn scan_source(source: String) -> Result[List[tree.Token], lex.LexError] = scan_source_with(source, false)
 
 test "Python lexer joins lines and does not invent code inside strings" {

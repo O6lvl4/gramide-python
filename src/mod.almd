@@ -16,14 +16,17 @@ import self.table
 
 let VERSION = "0.1.5"
 
-fn scan(source: String, recovering: Bool) -> Result[List[tree.Token], lex.LexError] = {
-  let tokens = lexer.scan_source_with(source, recovering)!
+fn scan(source: String, recovering: Bool, prepared: lexer.ScanTables) -> Result[List[tree.Token], lex.LexError] = {
+  let tokens = lexer.scan_prepared(source, recovering, prepared)!
   string_expressions.prepare(bytes.from_string(source), tokens) |> result.map_err((f) => lex.LexError {
     line: f.line, col: f.col, message: parser.format_failure(f)
   })
 }
 
-fn prepare_lexer() -> package_api.Tokenizer = (source, recovering) => scan(source, recovering)
+fn prepare_lexer() -> package_api.Tokenizer = {
+  let prepared = lexer.prepare()
+  (source, recovering) => scan(source, recovering, prepared)
+}
 
 fn definition() -> package_api.Definition = package_api.Definition {
   id: "python", package_name: "gramide-python", version: VERSION, extensions: [".py", ".pyi"],
