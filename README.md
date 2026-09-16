@@ -84,8 +84,8 @@ against a whole parse ([evidence](docs/evidence/incremental-python-argparse.json
 
 | 1,000 edits, median / 90th percentile | gramide | tree-sitter | a whole parse |
 |---|---:|---:|---:|
-| `argparse.py` (100 KB) | 55 / 73 µs | 43 / 64 µs | 2.5 ms |
-| `typing.py` (130 KB) | 52 / 67 µs | 112 / 129 µs | 3.0 ms |
+| `argparse.py` (100 KB) | 6.4 / 12 µs | 46 / 69 µs | 2.5 ms |
+| `typing.py` (130 KB) | 12 / 18 µs | 112 / 130 µs | 3.0 ms |
 
 Every item carries an id that the edits leaving it alone do not change: over
 these 2,000 edits no item was renamed. Over the standard library — every
