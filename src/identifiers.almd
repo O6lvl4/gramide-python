@@ -3,7 +3,7 @@ import self.identifier_data
 import gramide.lex
 
 type Tables = { starts: Bytes, continues: Bytes }
-fn prepare() -> Tables = Tables { starts: bytes.from_string(identifier_data.start_table()), continues: bytes.from_string(identifier_data.continuation_table()) }
+fn unicode_tables() -> Tables = Tables { starts: bytes.from_string(identifier_data.start_table()), continues: bytes.from_string(identifier_data.continuation_table()) }
 fn hex6(table: Bytes, at: Int) -> Int = {
   var value = 0
   var i = at
@@ -51,7 +51,7 @@ fn scan(t: Tables, source: Bytes, start: Int, line: Int, col: Int) -> Result[Int
 }
 
 test "Python identifiers distinguish Unicode starts and continuations" {
-  let t = prepare()
+  let t = unicode_tables()
   assert(is_start(t, 26085))
   assert(not is_start(t, 769))
   assert(is_continue(t, 769))

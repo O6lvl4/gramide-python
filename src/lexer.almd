@@ -129,7 +129,7 @@ fn frame_mode(frame: Option[interpolation.Frame]) -> Int = match frame {
 fn physical_with(source: String, recovering: Bool) -> Result[List[tree.Token], lex.LexError] = {
   guard not string.contains(source, "\u{0000}") else err(lex.LexError { line: 1, col: 1, message: "source code cannot contain null bytes" })
   let buffer = bytes.from_string(source)
-  let classes = identifiers.prepare()
+  let classes = identifiers.unicode_tables()
   let ops = operators()
   var tokens: List[tree.Token] = []
   var frames: List[interpolation.Frame] = []

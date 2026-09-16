@@ -12,7 +12,7 @@ fn scan(t: identifiers.Tables, v: Value) -> Value = {
 }
 effect fn main() -> Unit = {
   let input = json.parse(fs.read_text(list.first(env.args())!)!)!
-  let t = identifiers.prepare()
+  let t = identifiers.unicode_tables()
   let points = list.map(json.get_array(input, "points") ?? [], (v) => value.as_int(v) ?? -1)
   let classes = identifiers.classes(t, points)
   println(json.stringify(value.object([

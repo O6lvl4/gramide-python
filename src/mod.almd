@@ -14,7 +14,7 @@ import self.string_expressions
 import self.symbols
 import self.table
 
-let VERSION = "0.1.0"
+let VERSION = "0.1.1"
 
 fn scan(source: String, recovering: Bool) -> Result[List[tree.Token], lex.LexError] = {
   let tokens = lexer.scan_source_with(source, recovering)!
