@@ -1,0 +1,86 @@
+{
+ "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+ "edits": 1000,
+ "seed": 7,
+ "verify_every": 50,
+ "gramide_sha256": "8a4cb01622e9d5498597c6aa2b45871d3ce6ac0823d8764aaa727ac5e865640e",
+ "tree_sitter_harness_sha256": "ee9e4f6e4bf883ae94d8b07aa511891913205092bedf67a56816033cf36d57aa",
+ "files": [
+  {
+   "path": "/Users/o6lvl4/.local/share/qusp/store/35d774f61d63c1fd/python/lib/python3.14/argparse.py",
+   "bytes": 106655,
+   "gramide": {
+    "tool": "gramide",
+    "edits": 1000,
+    "median_us": 54.8,
+    "p90_us": 72.5,
+    "max_us": 111.5,
+    "fallbacks": 0,
+    "mismatches": 0,
+    "initial_mismatch": false,
+    "fallback_reasons": {
+     "no_lex": 0,
+     "no_head": 0,
+     "no_parse": 0,
+     "no_site": 0,
+     "root_own": 0,
+     "error_near": 0
+    },
+    "whole_parse_samples": 20,
+    "whole_parse_median_us": 2503.0,
+    "items": 1363,
+    "items_renamed_median": 0,
+    "items_renamed_p90": 0,
+    "items_renamed_max": 0,
+    "edits_renaming_none": 1000
+   },
+   "tree_sitter": {
+    "tool": "tree-sitter",
+    "edits": 1000,
+    "median_us": 43.0,
+    "p90_us": 64.0,
+    "max_us": 425.0,
+    "errors_at_end": 0,
+    "first_error_edit": -1
+   }
+  },
+  {
+   "path": "/Users/o6lvl4/.local/share/qusp/store/35d774f61d63c1fd/python/lib/python3.14/typing.py",
+   "bytes": 135870,
+   "gramide": {
+    "tool": "gramide",
+    "edits": 1000,
+    "median_us": 51.7,
+    "p90_us": 67.2,
+    "max_us": 186.9,
+    "fallbacks": 0,
+    "mismatches": 0,
+    "initial_mismatch": false,
+    "fallback_reasons": {
+     "no_lex": 0,
+     "no_head": 0,
+     "no_parse": 0,
+     "no_site": 0,
+     "root_own": 0,
+     "error_near": 0
+    },
+    "whole_parse_samples": 20,
+    "whole_parse_median_us": 3023.8,
+    "items": 1549,
+    "items_renamed_median": 0,
+    "items_renamed_p90": 0,
+    "items_renamed_max": 0,
+    "edits_renaming_none": 1000
+   },
+   "tree_sitter": {
+    "tool": "tree-sitter",
+    "edits": 1000,
+    "median_us": 112.0,
+    "p90_us": 129.0,
+    "max_us": 440.0,
+    "errors_at_end": 0,
+    "first_error_edit": -1
+   }
+  }
+ ]
+}

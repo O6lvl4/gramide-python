@@ -56,6 +56,30 @@ Unicode 16 の表）と照合しています。このリリースで `bash ci/ch
 書きかけの宣言ヘッダは決して出力しません。このパッケージだけがこの機能を掲げ、他はまだ掲げない
 理由がそれです。
 
+## キー入力 1 回
+
+エディタはファイルではなく編集をパーサに渡します。エンジンはパース済みのファイルを recover item
+（ここでは先頭レベルと各スイートの中の各文。このパッケージが回復の単位にしているのが文だからです）
+の入れ子として持ち、編集が触れた最小の item を読み直します。トークンに触れない編集や名前 1 つの
+打ち直しは何も読みません（[仕組み](https://github.com/O6lvl4/gramide/blob/main/docs/incremental.md)）。
+同じ 1,000 編集（13 文字以上の単語の 6 文字目に 1 文字打つ・消す）を、gramide の `reparse-bench` と、
+tree-sitter-python `26855ea` の `ts_tree_edit`＋再パース
+（[gramide-javascript](https://github.com/O6lvl4/gramide-javascript/blob/main/bench/tree_sitter_ranges.c) の
+C ハーネスを `-DLANG=tree_sitter_python` で組んだもの）にプロセス内で与え、50 回に 1 回は丸ごとの
+パースと照合しました（[証拠](docs/evidence/incremental-python-argparse.json)、`bench/incremental.py`）。
+
+| 1,000 編集、中央値 / 90 パーセンタイル | gramide | tree-sitter | 丸ごとのパース |
+|---|---:|---:|---:|
+| `argparse.py`（100 KB） | 55 / 73 µs | 43 / 64 µs | 2.5 ms |
+| `typing.py`（130 KB） | 52 / 67 µs | 112 / 129 µs | 3.0 ms |
+
+各 item は ID を持ち、その item に触れない編集では変わりません。この 2,000 編集で ID が変わった item は
+ゼロでした。標準ライブラリ（`lib/python3.14` 配下の `test`・`lib2to3`・`idlelib` 以外の全 `.py`）のうち
+十分長い単語を持つ 1,300 ファイルに各 10 回のランダム編集（13,000 回、毎回トークンとノードを丸ごとの
+パースと照合）で差はゼロ、ファイル全体の読み直しもゼロでした
+（[証拠](docs/evidence/incremental-corpus-cpython-stdlib.json)）。`ci/incremental_check.py` がこれを回し、
+1 回の編集は `reparse --edit START:OLD_END:NEW_END --new FILE` です。
+
 ## 書き方
 
 - **`src/lexer.almd`** と `layout`・`strings`・`interpolation`・`escapes`・`numbers`・

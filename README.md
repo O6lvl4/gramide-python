@@ -65,6 +65,38 @@ sides of the damage and never a declaration that looks intact under a broken
 header. A partial declaration head is never exported, which is why this
 package advertises the capability and the others do not yet.
 
+## One keystroke
+
+An editor hands the parser the edit, not the file. The engine keeps a parsed
+file as its recover items — here, every statement, at the top and inside
+every suite, since a statement is what this package recovers by — and
+re-reads the smallest one an edit touched; an edit that touches no token or
+retypes one name reads nothing at all
+([how](https://github.com/O6lvl4/gramide/blob/main/docs/incremental.md)).
+The same 1,000 edits, each a letter typed or deleted six letters into a word
+of thirteen or more, in-process, for gramide's `reparse-bench` and for
+tree-sitter-python at `26855ea` through `ts_tree_edit` + reparse in the C
+harness of
+[gramide-javascript](https://github.com/O6lvl4/gramide-javascript/blob/main/bench/tree_sitter_ranges.c)
+built with `-DLANG=tree_sitter_python`; every fiftieth result checked
+against a whole parse ([evidence](docs/evidence/incremental-python-argparse.json),
+`bench/incremental.py`):
+
+| 1,000 edits, median / 90th percentile | gramide | tree-sitter | a whole parse |
+|---|---:|---:|---:|
+| `argparse.py` (100 KB) | 55 / 73 µs | 43 / 64 µs | 2.5 ms |
+| `typing.py` (130 KB) | 52 / 67 µs | 112 / 129 µs | 3.0 ms |
+
+Every item carries an id that the edits leaving it alone do not change: over
+these 2,000 edits no item was renamed. Over the standard library — every
+`.py` under `lib/python3.14` but `test`, `lib2to3` and `idlelib` — ten random
+edits in each of the 1,300 files that hold a long enough word (13,000 edits,
+every one checked token for token and node for node against a whole parse
+of the same text) gave no difference and no whole-file read
+([evidence](docs/evidence/incremental-corpus-cpython-stdlib.json)).
+`ci/incremental_check.py` runs this; `reparse --edit START:OLD_END:NEW_END --new FILE`
+is the one-edit command.
+
 ## How it is written
 
 - **`src/lexer.almd`** with `layout`, `strings`, `interpolation`, `escapes`,
