@@ -37,7 +37,7 @@ with tempfile.TemporaryDirectory() as tmp:
  assert strict['symbols']==recovered['symbols'],recovered
  p.write_text('x = (]\n')
  r=subprocess.run([str(BIN),'symbols-recovered',str(p)],capture_output=True,text=True)
- assert r.returncode!=0 and not r.stdout,r
+ assert r.returncode==0 and not json.loads(r.stdout)['complete'],r  # a mismatched closer recovers: an error token, the bracket open to the end
  other=Path(tmp)/'x.rs';other.write_text('fn valid() {}\n')
  r=subprocess.run([str(BIN),'symbols-recovered',str(other)],capture_output=True,text=True)
  assert r.returncode!=0 and not r.stdout,r

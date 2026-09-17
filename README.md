@@ -56,14 +56,40 @@ Memory is still tree-sitter's; incremental parsing is not here at all.
 This is the package that offers `symbols-recovered`, the contract
 [hew](https://github.com/O6lvl4/hew) uses when strict `symbols` refuses a
 file. A failed statement is skipped to the next logical line at the same
-indentation, an unterminated string or f-string to the line ending that
-closes it, an unclosed bracket to the end of the file, a stray `)` or `$` to
-the end of its line; each skipped range becomes an `ERROR` node. The document
+indentation, an unterminated string or f-string — a `}` gone from a
+replacement field included — to the end of its line when it opened with one
+quote, to the end of the file when with three, an unclosed bracket to the line where a statement begins at the
+opener's indentation or less (a closer of a kind open deeper closes down to
+it), a stray `)` or `$` to the end of its line; each skipped range becomes an `ERROR` node. The document
 then lists only the declarations whose byte ranges do not intersect an error,
 with the ranges themselves, so a reader can select the intact methods on both
 sides of the damage and never a declaration that looks intact under a broken
 header. A partial declaration head is never exported, which is why this
 package advertises the capability and the others do not yet.
+
+An editor's file is broken more often than not. `bench/recovery.py` breaks every
+file of the corpus in four ways, one at a time — a `{` typed at the start of a
+word, a `}` deleted, a `)` deleted, a `(` typed — and compares what each tool
+still lists (gramide's `outline`, which reads the recovered parse; tree-sitter's
+tree through the same harness, `--recover`) with its own listing of the whole
+file, by kind, name and start line. A declaration whose lines hold the break is
+expected to go; a break is *clean* when nothing else is lost and nothing new
+appears ([evidence](docs/evidence/recovery-cpython-stdlib.json), [how it recovers](https://github.com/O6lvl4/gramide/blob/main/docs/recovery.md)):
+
+| CPython `Lib/`: 1,450 files, 5,193 breaks | gramide | tree-sitter |
+|---|---:|---:|
+| declarations kept, all breaks | 98.9% | 96.3% |
+| clean breaks (nothing lost beyond the break, nothing invented) | 98.1% | 82.3% |
+| clean breaks, `insert {` | 98.7% | 92.3% |
+| clean breaks, `delete }` | 96.7% | 73.0% |
+| clean breaks, `delete )` | 97.3% | 68.9% |
+| clean breaks, `insert (` | 99.2% | 91.1% |
+
+gramide is ahead on every kind of break. What it loses is the statement that
+holds the break; what tree-sitter loses on a `}` or `)` deleted is the block
+around it, and on a `}` gone from an f-string's field, the rest of the file
+was gramide's loss too until the scanner learned that a string opened with
+one quote ends on its line.
 
 ## One keystroke
 
@@ -84,8 +110,8 @@ against a whole parse ([evidence](docs/evidence/incremental-python-argparse.json
 
 | 1,000 edits, median / 90th percentile | gramide | tree-sitter | a whole parse |
 |---|---:|---:|---:|
-| `argparse.py` (100 KB) | 5.5 / 9.1 µs | 44 / 67 µs | 2.6 ms |
-| `typing.py` (130 KB) | 11 / 16 µs | 112 / 129 µs | 3.0 ms |
+| `argparse.py` (100 KB) | 5.5 / 8.8 µs | 44 / 66 µs | 2.5 ms |
+| `typing.py` (130 KB) | 11 / 15 µs | 112 / 130 µs | 3.1 ms |
 
 Every item carries an id that the edits leaving it alone do not change: over
 these 2,000 edits no item was renamed. Over the standard library — every

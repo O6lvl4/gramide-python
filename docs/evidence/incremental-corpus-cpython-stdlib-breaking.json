@@ -11,14 +11,14 @@
     "idlelib"
   ],
   "edits_per_file": 10,
-  "breaking": false,
+  "breaking": true,
   "files": 1390,
   "checked": 1300,
   "edits": 13000,
   "mismatches": 0,
-  "fallbacks": 0,
+  "fallbacks": 990,
   "fallback_reasons": {
-    "no_lex": 0,
+    "no_lex": 990,
     "no_head": 0,
     "no_parse": 0,
     "no_site": 0,

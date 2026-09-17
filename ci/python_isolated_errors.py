@@ -53,8 +53,8 @@ with tempfile.TemporaryDirectory() as tmp:
  assert recovered['complete'] and not recovered['errors'] and recovered['symbols']==strict['symbols'],recovered
  # An unknown character inside an unclosed bracket cannot create a restart line.
  case('def before(): pass\nx = ($\n def phantom(): pass\n',['before'])
- # Mismatched existing brackets, NUL and bad escape validation remain failures.
- for source in ['x = (]\n','x = "\x00"\n','x = "\\xZZ"\n']:
+ # NUL and bad escape validation remain failures (a mismatched bracket recovers: python_recovery.py).
+ for source in ['x = "\x00"\n','x = "\\xZZ"\n']:
   path.write_bytes(source.encode());result=run('symbols-recovered',path)
   assert result.returncode!=0 and not result.stdout,(source,result)
 print(f'Python isolated errors: {count} recovery cases, strict rejection, exact retained ranges and literal containment passed')

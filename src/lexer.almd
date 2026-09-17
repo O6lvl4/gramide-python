@@ -246,10 +246,15 @@ fn physical_prepared(source: String, recovering: Bool, prepared: PythonTables) -
     match failure {
       some(e) => {
         guard recovering and not list.is_empty(frames) else err(e)
-        // Only a top-level literal newline has an unambiguous resume boundary.
-        // Failed replacement/nested/format states conservatively own the tail.
-        let f = option.to_result(frame, e)!
-        i = if list.len(frames) == 1 and mode == MODE_LITERAL and e.message == "unterminated interpolated string" then interpolation.failed_literal_end(buffer, start, f) else bytes.len(buffer)
+        // A string opened with one quote whose own quote comes again on the
+        // line ended there, whatever state the failure left inside it (a `}`
+        // gone from a replacement field): its line end is the resume
+        // boundary. Without that quote the field may run on — a replacement
+        // field can span lines — and the tail is owned, as is a string
+        // opened with three quotes.
+        let outer = option.to_result(list.get(frames, 0), e)!
+        let in_literal = list.len(frames) == 1 and mode == MODE_LITERAL and e.message == "unterminated interpolated string"
+        i = if outer.width == 1 and (in_literal or closes_on_line(buffer, start, outer.quote)) then interpolation.failed_literal_end(buffer, start, outer) else bytes.len(buffer)
         discard_interpolation(tokens, checkpoint, head, buffer, i)
         frames = []
         kind = tree.T_NONE
@@ -295,6 +300,27 @@ fn physical_prepared(source: String, recovering: Bool, prepared: PythonTables) -
   ok(tokens)
 }
 fn physical(source: String) -> Result[List[tree.Token], lex.LexError] = physical_with(source, false)
+// Whether the string closes on this line: its byte `quote` comes again
+// from `at` on, and after the last one only blank space or closing
+// punctuation (`)`, `]`, `}`, `,`, `;`, `:`) runs to the line end. A quote
+// with text after it opened something else — a nested string in a
+// replacement field — and says nothing about where the string ends.
+fn closes_on_line(buffer: Bytes, at: Int, quote: Int) -> Bool = {
+  var i = at
+  var last = -1
+  while i < bytes.len(buffer) and bytes.get_or(buffer, i, 10) != 10 and bytes.get_or(buffer, i, 13) != 13 {
+    if bytes.get_or(buffer, i, -1) == quote then last = i else ()
+    i = i + 1
+  }
+  var j = last + 1
+  var clean = last >= 0
+  while clean and j < i {
+    let b = bytes.get_or(buffer, j, 0)
+    clean = b == 32 or b == 9 or b == 41 or b == 93 or b == 125 or b == 44 or b == 59 or b == 58
+    j = j + 1
+  }
+  clean
+}
 fn scan_source_with(source: String, recovering: Bool) -> Result[List[tree.Token], lex.LexError] = layout.apply_with(source, physical_with(source, recovering)!, recovering)
 fn scan_prepared(source: String, recovering: Bool, prepared: PythonTables) -> Result[List[tree.Token], lex.LexError] = layout.apply_with(source, physical_prepared(source, recovering, prepared)!, recovering)
 fn scan_source(source: String) -> Result[List[tree.Token], lex.LexError] = scan_source_with(source, false)
@@ -322,4 +348,37 @@ test "a string prefix is only f or t, in either order with r, before a quote" {
   assert_eq(prefix_code(bytes.from_string("frf'"), 0, 3), P_NONE)
   // A name is only a prefix when the quote is glued to it.
   assert_eq(prefix_code(bytes.from_string("f "), 0, 1), P_NONE)
+}
+
+
+test "recovering, an open bracket closes where a dedented statement begins, and a mismatched closer closes down to its opener" {
+  // `f(1,` is never closed: the tokens from `(` to the end of the line before
+  // `def n` become one error token, and `n` is a method again
+  let src = "class B:\n    def m(self):\n        x = f(1,\n        y = 2\n    def n(self):\n        return 3\n"
+  let toks = scan_source_with(src, true)!
+  let errors = list.filter(toks, (t) => t.kind == tree.T_ERROR)
+  assert_eq(list.map(errors, (t) => (t.start, t.end)), [((string.index_of(src, "f(") ?? -2) + 1, (string.index_of(src, "    def n") ?? 0) - 1)])
+  // `{` left open inside `(`: the `)` closes down to the `(`, and the file lexes
+  let src2 = "x = f({1: 2, 3)\ny = 4\n"
+  let toks2 = scan_source_with(src2, true)!
+  assert_eq(list.len(list.filter(toks2, (t) => t.kind == tree.T_ERROR)), 0)
+  assert(list.len(list.filter(toks2, (t) => t.kind == tree.T_NEWLINE)) >= 2)
+  // strict mode still refuses both
+  assert(result.is_err(scan_source_with(src, false)))
+  assert(result.is_err(scan_source_with(src2, false)))
+}
+
+test "recovering, a `}` gone from a single-quoted f-string's field costs its line, not the file" {
+  let src = "def a():\n    raise TypeError(f\"x {name() must\")\n\ndef b():\n    return 2\n"
+  // the closing quote ends the line, so the string ends there; a quote with
+  // text after it, or none, leaves the tail owned
+  let src3 = "x = f\"{0x\ndef phantom(): pass\n"
+  let src4 = "x = f\"{\"bad\ndef phantom(): pass\n"
+  assert(list.len(list.filter(scan_source_with(src4, true)!, (t) => t.kind == tree.T_ERROR and t.end == string.len(src4))) == 1)
+  assert(list.len(list.filter(scan_source_with(src3, true)!, (t) => t.kind == tree.T_ERROR and t.end == string.len(src3))) == 1)
+  let toks = scan_source_with(src, true)!
+  let after = list.filter(toks, (t) => t.start >= (string.index_of(src, "def b") ?? 0))
+  // `def b` and everything after it are ordinary tokens again
+  assert(list.len(after) > 5)
+  assert_eq(list.len(list.filter(after, (t) => t.kind == tree.T_ERROR)), 0)
 }

@@ -58,8 +58,13 @@ with tempfile.TemporaryDirectory() as tmp:
  result=run('outline',p)
  assert result.returncode==0 and result.stdout=='L2001-2001 function after\n',result
  count+=1
+ # A closer of the wrong kind is an error token and the open bracket runs to the end: the next line's declaration survives.
+ p.write_text('x = (]\ndef after(): pass\n')
+ result=run('outline',p)
+ assert result.returncode==0 and result.stdout=='L2-2 function after\n' and '[recovered,' in result.stderr,result
+ count+=1
  # Lexical failures are not supported by this recovery layer.
- for source in ['x = (]\ndef after(): pass\n','x = "\\xZZ"\n']:
+ for source in ['x = "\\xZZ"\n']:
   p.write_text(source)
   for cmd in ['check','symbols','outline']:
    result=run(cmd,p);assert result.returncode!=0 and not result.stdout,(source,cmd,result)

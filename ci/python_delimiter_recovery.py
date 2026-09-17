@@ -9,7 +9,7 @@ def run(command,path):
 
 with tempfile.TemporaryDirectory() as tmp:
  path=Path(tmp)/'editing.py'
- def case(source,names):
+ def case(source,names,owns_tail=True):
   global count
   try:ast.parse(source)
   except SyntaxError:pass
@@ -21,7 +21,9 @@ with tempfile.TemporaryDirectory() as tmp:
   assert not doc['complete'] and doc['diagnostic'] and doc['errors'],doc
   assert [s['name'] for s in doc['symbols']]==names,(source,doc)
   raw=source.encode()
-  assert doc['errors'][-1]['end_byte']==len(raw),(source,doc)
+  # an unclosed bracket owns the tail up to a line that begins a statement at
+  # the opener's indentation or less; with none such it runs to the end
+  if owns_tail:assert doc['errors'][-1]['end_byte']==len(raw),(source,doc)
   for e in doc['errors']:
    assert 0<=e['start_byte']<e['end_byte']<=len(raw),e
    line=len(re.findall(rb'\r\n|\r|\n',raw[:e['start_byte']]))+1
@@ -45,32 +47,39 @@ with tempfile.TemporaryDirectory() as tmp:
 
  for opening in ['(','[','{']:
   for newline in ['\n','\r\n','\r']:
-   for tail in ['',newline,newline+' def phantom(): pass'+newline,newline+'# 日本語'+newline+'def phantom(): pass'+newline]:
-    for prefix,names in [
-      ('def before(): pass'+newline+'x = ',['before']),
-      ('class Box:'+newline+' def good(self): pass'+newline+' x = ',['Box.good']),
-      ('def outer():'+newline+' def good(): pass'+newline+' x = ',['outer.good']),
-      ('x = ',[]),
+   for indent,tail in [(None,''),(None,newline),(1,newline+' def NAME(): pass'+newline),(0,newline+'# 日本語'+newline+'def NAME(): pass'+newline)]:
+    for prefix,names,opener_indent,owner in [
+      ('def before(): pass'+newline+'x = ',['before'],0,''),
+      ('class Box:'+newline+' def good(self): pass'+newline+' x = ',['Box.good'],1,'Box.'),
+      ('def outer():'+newline+' def good(): pass'+newline+' x = ',['outer.good'],1,'outer.'),
+      ('x = ',[],0,''),
     ]:
-     case(prefix+opening+tail,names)
+     # a def at the opener's indentation or less is a statement again — a
+     # method or nested function at the opener's own indentation, a top-level
+     # function at none; one written deeper is inside the bracket still
+     promoted=indent is not None and indent<=opener_indent
+     name='after' if promoted else 'phantom'
+     listed=names+([(owner if indent==opener_indent and indent>0 else '')+name] if promoted else [])
+     case(prefix+opening+tail.replace('NAME',name),listed,owns_tail=not promoted)
  for source in [
   'def before(): return [1]\nx = (\n def phantom(): pass\n',
   'def before(): pass\ndef damaged(\n def phantom(): pass\n',
   'def before(): pass\nclass Damaged(\n def phantom(): pass\n',
   'def before(): pass\nx = ([{}]\n def phantom(): pass\n',
   'def before(): pass\nx = (\n \\\n',
-  'def before(): pass\nx = ("bad\ndef phantom(): pass\n',
-  'def before(): pass\nx = (f"bad\ndef phantom(): pass\n',
   'def before(): pass\nx = [t"{value\ndef phantom(): pass\n',
   'def before(): pass\nx = {"""bad\ndef phantom(): pass\n',
   'def before(): pass\nx = (\n'+''.join(f' def phantom{i}(): pass\n' for i in range(2000)),
  ]:case(source,['before'])
+ # a string that fails inside the bracket costs its line; the `def` at the opener's indentation is a declaration
+ for source in ['def before(): pass\nx = ("bad\ndef after(): pass\n','def before(): pass\nx = (f"bad\ndef after(): pass\n']:
+  case(source,['before','after'],owns_tail=False)
  # Explicit edits are full reparses, not an incremental benchmark. The same
- # suffix becomes visible only when the enclosing expression is closed.
+ # suffix is visible either way: open, the `def` at the opener's indentation ends the expression.
  for opening,closing in [('(',')'),('[',']'),('{','}')]:
   for close in ['',closing,'',closing]:
    source='def before(): pass\nx = '+opening+'1\n'+close+'\ndef after(): pass\n'
-   if not close:case(source,['before'])
+   if not close:case(source,['before','after'],owns_tail=False)
    else:
     ast.parse(source)
     path.write_text(source)
@@ -78,8 +87,11 @@ with tempfile.TemporaryDirectory() as tmp:
     recovered=json.loads(subprocess.check_output([str(BIN),'symbols-recovered',str(path)]))
     assert recovered['complete'] and recovered['symbols']==strict['symbols'],recovered
     assert [s['name'] for s in recovered['symbols']]==['before','after'],recovered
- # Mismatches and invalid indentation remain failures even in recovery.
- for source in ['x = (]\n','if True:\n  x = 1\n y = (\n']:
+ # A mismatched closer recovers (an error token, the bracket open to the end); invalid indentation remains a failure even in recovery.
+ path.write_text('x = (]\n')
+ result=run('symbols-recovered',path)
+ assert result.returncode==0 and not json.loads(result.stdout)['complete'],result
+ for source in ['if True:\n  x = 1\n y = (\n']:
   path.write_text(source)
   result=run('symbols-recovered',path)
   assert result.returncode!=0 and not result.stdout,(source,result)

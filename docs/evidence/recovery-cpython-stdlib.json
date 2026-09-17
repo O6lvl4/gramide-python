@@ -1,0 +1,303 @@
+{
+ "root": "/Users/o6lvl4/.local/share/qusp/store/35d774f61d63c1fd/python/lib/python3.14",
+ "kinds": [
+  "class",
+  "function"
+ ],
+ "files": 1450,
+ "skipped_not_clean": 0,
+ "breaks_per_file": 4,
+ "seed": 7,
+ "break_kinds": [
+  "insert {",
+  "delete }",
+  "delete )",
+  "insert ("
+ ],
+ "gramide": {
+  "total": {
+   "breaks": 5193,
+   "baseline": 127366,
+   "kept": 126018,
+   "lost_touching": 610,
+   "lost_collateral": 738,
+   "spurious": 9,
+   "clean_breaks": 5096,
+   "no_error_reported": 5193,
+   "error_nodes": 3477
+  },
+  "by_break": [
+   {
+    "breaks": 1435,
+    "baseline": 32652,
+    "kept": 32413,
+    "lost_touching": 157,
+    "lost_collateral": 82,
+    "spurious": 4,
+    "clean_breaks": 1417,
+    "no_error_reported": 1435,
+    "error_nodes": 768
+   },
+   {
+    "breaks": 948,
+    "baseline": 29410,
+    "kept": 28875,
+    "lost_touching": 5,
+    "lost_collateral": 530,
+    "spurious": 0,
+    "clean_breaks": 917,
+    "no_error_reported": 948,
+    "error_nodes": 727
+   },
+   {
+    "breaks": 1375,
+    "baseline": 32652,
+    "kept": 32256,
+    "lost_touching": 301,
+    "lost_collateral": 95,
+    "spurious": 3,
+    "clean_breaks": 1338,
+    "no_error_reported": 1375,
+    "error_nodes": 1208
+   },
+   {
+    "breaks": 1435,
+    "baseline": 32652,
+    "kept": 32474,
+    "lost_touching": 147,
+    "lost_collateral": 31,
+    "spurious": 2,
+    "clean_breaks": 1424,
+    "no_error_reported": 1435,
+    "error_nodes": 774
+   }
+  ],
+  "worst": [
+   [
+    91,
+    0,
+    "zipfile/__init__.py",
+    "delete }",
+    21818,
+    603
+   ],
+   [
+    84,
+    0,
+    "_pyio.py",
+    "delete }",
+    55881,
+    1625
+   ],
+   [
+    81,
+    0,
+    "site-packages/pypdf/xmp.py",
+    "delete }",
+    3312,
+    104
+   ],
+   [
+    40,
+    0,
+    "site-packages/pip/_vendor/truststore/_api.py",
+    "insert {",
+    2386,
+    77
+   ],
+   [
+    39,
+    0,
+    "ctypes/__init__.py",
+    "delete }",
+    8814,
+    295
+   ],
+   [
+    32,
+    0,
+    "http/server.py",
+    "delete }",
+    23164,
+    632
+   ],
+   [
+    27,
+    0,
+    "asyncio/base_subprocess.py",
+    "delete }",
+    4216,
+    135
+   ],
+   [
+    25,
+    0,
+    "_pyrepl/_module_completer.py",
+    "delete }",
+    7816,
+    204
+   ],
+   [
+    18,
+    0,
+    "string/__init__.py",
+    "delete }",
+    3299,
+    92
+   ],
+   [
+    18,
+    0,
+    "site-packages/pip/_vendor/platformdirs/macos.py",
+    "delete )",
+    220,
+    15
+   ]
+  ]
+ },
+ "tree_sitter": {
+  "total": {
+   "breaks": 5193,
+   "baseline": 127366,
+   "kept": 122664,
+   "lost_touching": 175,
+   "lost_collateral": 4527,
+   "spurious": 0,
+   "clean_breaks": 4273,
+   "no_error_reported": 1718,
+   "error_nodes": 18218
+  },
+  "by_break": [
+   {
+    "breaks": 1435,
+    "baseline": 32652,
+    "kept": 32254,
+    "lost_touching": 10,
+    "lost_collateral": 388,
+    "spurious": 0,
+    "clean_breaks": 1325,
+    "no_error_reported": 667,
+    "error_nodes": 2341
+   },
+   {
+    "breaks": 948,
+    "baseline": 29410,
+    "kept": 26768,
+    "lost_touching": 48,
+    "lost_collateral": 2594,
+    "spurious": 0,
+    "clean_breaks": 692,
+    "no_error_reported": 222,
+    "error_nodes": 6020
+   },
+   {
+    "breaks": 1375,
+    "baseline": 32652,
+    "kept": 31422,
+    "lost_touching": 94,
+    "lost_collateral": 1136,
+    "spurious": 0,
+    "clean_breaks": 948,
+    "no_error_reported": 168,
+    "error_nodes": 7391
+   },
+   {
+    "breaks": 1435,
+    "baseline": 32652,
+    "kept": 32220,
+    "lost_touching": 23,
+    "lost_collateral": 409,
+    "spurious": 0,
+    "clean_breaks": 1308,
+    "no_error_reported": 661,
+    "error_nodes": 2466
+   }
+  ],
+  "worst": [
+   [
+    236,
+    0,
+    "_pydecimal.py",
+    "delete }",
+    12689,
+    336
+   ],
+   [
+    84,
+    0,
+    "_pyio.py",
+    "delete }",
+    55881,
+    1625
+   ],
+   [
+    74,
+    0,
+    "unittest/case.py",
+    "delete }",
+    21935,
+    620
+   ],
+   [
+    71,
+    0,
+    "site-packages/_pytest/logging.py",
+    "delete )",
+    1579,
+    52
+   ],
+   [
+    65,
+    0,
+    "threading.py",
+    "delete }",
+    24945,
+    715
+   ],
+   [
+    62,
+    0,
+    "_pydatetime.py",
+    "delete )",
+    58532,
+    1743
+   ],
+   [
+    59,
+    0,
+    "site-packages/pip/_vendor/pygments/lexer.py",
+    "delete )",
+    1100,
+    34
+   ],
+   [
+    53,
+    0,
+    "site-packages/PIL/ImageFile.py",
+    "delete }",
+    2106,
+    73
+   ],
+   [
+    51,
+    0,
+    "_pydecimal.py",
+    "delete )",
+    155904,
+    4338
+   ],
+   [
+    49,
+    0,
+    "statistics.py",
+    "insert (",
+    28783,
+    931
+   ]
+  ]
+ },
+ "both_lost_collateral": 21,
+ "only_gramide_lost_collateral": 67,
+ "only_tree_sitter_lost_collateral": 899,
+ "seconds": 38.1
+}

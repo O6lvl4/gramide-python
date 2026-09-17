@@ -71,11 +71,15 @@ with tempfile.TemporaryDirectory() as tmp:
         case('def outer():\n def good(): pass\n x = '+family+'"""bad\ndef phantom(): pass\n', ['outer.good'])
     # Two failures exercise checkpoint reset and UTF-8 source offsets.
     case('# 日本語\nx = f"bad\ndef first(): pass\ny = t"bad\ndef second(): pass\n', ['first', 'second'])
-    # An enclosing unmatched bracket owns the tail; a physical newline
-    # inside it must not become a safe statement boundary.
-    path.write_text('def before(): pass\nx = (f"bad\ndef phantom(): pass\n')
+    # An enclosing unmatched bracket owns the tail up to the first line that
+    # begins with a statement word at the opener's indentation or less: the
+    # `def` there is a declaration again, one written deeper is not.
+    path.write_text('def before(): pass\nx = (f"bad\ndef after(): pass\n')
     result = run('symbols-recovered', path)
     assert result.returncode == 0, result
     doc = json.loads(result.stdout)
+    assert not doc['complete'] and [s['name'] for s in doc['symbols']] == ['before', 'after'], doc
+    path.write_text('def before(): pass\nx = (f"bad\n    def phantom(): pass\n')
+    doc = json.loads(run('symbols-recovered', path).stdout)
     assert not doc['complete'] and [s['name'] for s in doc['symbols']] == ['before'], doc
 print(f'Python interpolation recovery: {count} prefix, quote, newline, frame rollback and containment cases passed')

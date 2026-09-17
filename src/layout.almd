@@ -31,6 +31,72 @@ fn single_byte(buffer: Bytes, t: tree.Token) -> Int =
 fn opens_bracket(b: Int) -> Bool = b == 40 or b == 91 or b == 123
 fn opener_of(b: Int) -> Int = if b == 41 then 40 else if b == 93 then 91 else if b == 125 then 123 else -1
 
+// The words that begin a statement and nothing else, at the start of a line
+let STATEMENT_HEADS = ["def", "class", "if", "elif", "else", "for", "while", "try", "except", "finally", "with", "return", "import", "from", "pass", "raise", "assert", "del", "global", "nonlocal", "async", "@"]
+// Whether the next code token after position `at` in the physical stream
+// begins a line with a statement word, at an indentation no deeper than the
+// line that opened `opening`
+fn statement_resumes(buffer: Bytes, physical: List[tree.Token], at: Int, opening: tree.Token) -> Bool = {
+  var i = at
+  var next: Option[tree.Token] = none
+  while option.is_none(next) and i < list.len(physical) {
+    match list.get(physical, i) { some(n) => if n.kind != tree.T_COMMENT and n.kind != tree.T_NEWLINE and n.kind != tree.T_CONTINUATION then next = some(n) else (), none => () }
+    i = i + 1
+  }
+  match next {
+    none => false,
+    some(n) => {
+      let line_start = n.start - n.col + 1
+      let here = indentation(buffer, line_start)
+      let opener_line = indentation(buffer, opening.start - opening.col + 1)
+      n.kind != tree.T_EOF and here.width == n.col - 1 and here.width <= opener_line.width
+        and list.contains(STATEMENT_HEADS, bytes.to_string_lossy(bytes.slice(buffer, n.start, n.end)))
+    },
+  }
+}
+// Recovering, at a line end inside a bracket an edit left open: the tokens
+// since the opener become one error token and the bracket is closed
+fn close_open_bracket(mut out: List[tree.Token], mut brackets: List[tree.Token], bracket_start: Int, t: tree.Token) -> Unit = {
+  let opening = list.get(brackets, 0) ?? t
+  while list.len(out) > bracket_start { let _ = list.pop(out) }
+  list.push(out, tree.Token { ...opening, kind: tree.T_ERROR, end: t.start })
+  list.clear(brackets)
+}
+// A closer: it pops the innermost opener when they match. Otherwise, strict,
+// the file fails; recovering, the answer says whether the closer is a stray
+// (an error token), which it is with nothing open, or when nothing open is
+// of its kind
+fn close_bracket(mut brackets: List[tree.Token], buffer: Bytes, t: tree.Token, expected: Int, recovering: Bool) -> Result[Bool, lex.LexError] = {
+  if recovering and list.is_empty(brackets) then ok(true)
+  else {
+    let opener = list.pop(brackets)
+    let opened = match opener { some(opening) => single_byte(buffer, opening), none => -1 }
+    if opened == expected then ok(false)
+    else {
+      guard recovering else err(fail(t, "mismatched closing delimiter"))
+      ok(not close_mismatched(brackets, buffer, expected, opener))
+    }
+  }
+}
+// Recovering, a closer that does not match the innermost opener (already
+// popped): one of a kind open deeper closes down to it — the openers between
+// were left open by the edit — and the answer is true; one that matches
+// nothing open is a stray, the innermost opener stays, and the answer is false
+fn close_mismatched(mut brackets: List[tree.Token], buffer: Bytes, expected: Int, opener: Option[tree.Token]) -> Bool = {
+  let depth = last_opener(buffer, brackets, expected)
+  if depth >= 0 then { while list.len(brackets) > depth { let _ = list.pop(brackets) }; true }
+  else { match opener { some(o) => list.push(brackets, o), none => () }; false }
+}
+// The index in `brackets` of the innermost opener of kind `expected`, -1 when none is open
+fn last_opener(buffer: Bytes, brackets: List[tree.Token], expected: Int) -> Int = {
+  var i = list.len(brackets) - 1
+  var found = -1
+  while found < 0 and i >= 0 {
+    match list.get(brackets, i) { some(b) => if single_byte(buffer, b) == expected then found = i else (), none => () }
+    i = i - 1
+  }
+  found
+}
 fn marker(kind: Int, at: tree.Token) -> tree.Token =
   tree.Token { kind: kind, start: at.start, end: at.start, line: at.line, col: at.col }
 
@@ -67,7 +133,10 @@ fn apply_with(source: String, physical: List[tree.Token], recovering: Bool) -> R
   var code = false
   var continuation: Option[tree.Token] = none
   var prefix: Option[Indent] = none
-  for t in physical {
+  var idx = 0
+  while idx < list.len(physical) {
+    let t = list.get(physical, idx) ?? tree.Token { kind: tree.T_EOF, start: 0, end: 0, line: 1, col: 1 }
+    idx = idx + 1
     if t.kind == tree.T_COMMENT then { continuation = none }
     else if t.kind == tree.T_CONTINUATION then {
       if beginning then {
@@ -79,6 +148,11 @@ fn apply_with(source: String, physical: List[tree.Token], recovering: Bool) -> R
     }
     else if t.kind == tree.T_NEWLINE then {
       continuation = none
+      // recovering, inside a bracket an edit left open: a line that begins a
+      // statement at the opener's line's indentation or less is not a
+      // continuation of it. Close the bracket here — the tokens since the
+      // opener become one error token — and let the line end count
+      if recovering and not list.is_empty(brackets) and statement_resumes(buffer, physical, idx, list.get(brackets, 0) ?? t) then close_open_bracket(out, brackets, bracket_start, t) else ()
       if list.is_empty(brackets) and code then {
         list.push(out, t)
         beginning = true
@@ -119,13 +193,8 @@ fn apply_with(source: String, physical: List[tree.Token], recovering: Bool) -> R
           if list.is_empty(brackets) then bracket_start = list.len(out) else ()
           list.push(brackets, t)
         }
-        else if expected >= 0 then {
-          if recovering and list.is_empty(brackets) then stray_closer = true
-          else {
-            let opened = match list.pop(brackets) { some(opening) => single_byte(buffer, opening), none => -1 }
-            guard opened == expected else err(fail(t, "mismatched closing delimiter"))
-          }
-        } else ()
+        else if expected >= 0 then stray_closer = close_bracket(brackets, buffer, t, expected, recovering)!
+        else ()
       } else ()
       list.push(out, if stray_closer then tree.Token { ...t, kind: tree.T_ERROR } else t)
       code = true
@@ -155,3 +224,4 @@ test "a delimiter is decided by one byte of the source" {
   assert_eq(opener_of(single_byte(src, plus)), -1)
   assert_eq(single_byte(src, two_bytes), -1)
 }
+
