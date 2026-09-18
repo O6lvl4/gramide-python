@@ -18,13 +18,13 @@
   "total": {
    "breaks": 5193,
    "baseline": 127366,
-   "kept": 126018,
-   "lost_touching": 610,
-   "lost_collateral": 738,
+   "kept": 126029,
+   "lost_touching": 601,
+   "lost_collateral": 736,
    "spurious": 9,
-   "clean_breaks": 5096,
+   "clean_breaks": 5097,
    "no_error_reported": 5193,
-   "error_nodes": 3477
+   "error_nodes": 3372
   },
   "by_break": [
    {
@@ -41,13 +41,13 @@
    {
     "breaks": 948,
     "baseline": 29410,
-    "kept": 28875,
-    "lost_touching": 5,
+    "kept": 28880,
+    "lost_touching": 0,
     "lost_collateral": 530,
     "spurious": 0,
     "clean_breaks": 917,
     "no_error_reported": 948,
-    "error_nodes": 727
+    "error_nodes": 677
    },
    {
     "breaks": 1375,
@@ -58,18 +58,18 @@
     "spurious": 3,
     "clean_breaks": 1338,
     "no_error_reported": 1375,
-    "error_nodes": 1208
+    "error_nodes": 1167
    },
    {
     "breaks": 1435,
     "baseline": 32652,
-    "kept": 32474,
-    "lost_touching": 147,
-    "lost_collateral": 31,
+    "kept": 32480,
+    "lost_touching": 143,
+    "lost_collateral": 29,
     "spurious": 2,
-    "clean_breaks": 1424,
+    "clean_breaks": 1425,
     "no_error_reported": 1435,
-    "error_nodes": 774
+    "error_nodes": 760
    }
   ],
   "worst": [
@@ -296,8 +296,8 @@
    ]
   ]
  },
- "both_lost_collateral": 21,
+ "both_lost_collateral": 20,
  "only_gramide_lost_collateral": 67,
- "only_tree_sitter_lost_collateral": 899,
- "seconds": 50.0
+ "only_tree_sitter_lost_collateral": 900,
+ "seconds": 81.0
 }

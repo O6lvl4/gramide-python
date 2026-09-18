@@ -23,7 +23,7 @@ fn numeric(source: Bytes, start: Int, end: Int, raw: Bool, byte_literal: Bool, t
       let code = bytes.get_or(source, i + 1, -1)
       let width = if code == 120 then 2 else if not byte_literal and code == 117 then 4 else if not byte_literal and code == 85 then 8 else 0
       if width > 0 then {
-        let error = parser.Failure { line: token.line, col: token.col, found: tree.token_text(source, token), expected: ["complete numeric escape within Unicode range"] }
+        let error = parser.Failure { line: token.line, col: token.col, found: tree.token_text(source, token), expected: ["complete numeric escape within Unicode range"], note: "" }
         guard i + 2 + width <= end else err(error)
         var value = 0
         for offset in 0..<width {

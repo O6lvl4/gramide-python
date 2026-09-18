@@ -35,7 +35,7 @@ fn prepare(source: Bytes, tokens: List[tree.Token]) -> Result[List[tree.Token], 
       let next = list.get(buffer.items, i + 1)
       guard option.map(next, (t) => t.start == token.end) ?? false else err(parser.Failure {
         line: token.line, col: token.col, found: tree.token_text(source, token),
-        expected: ["conversion type immediately after !"]
+        expected: ["conversion type immediately after !"], note: ""
       })
     } else ()
     i = i + 1

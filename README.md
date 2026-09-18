@@ -78,12 +78,12 @@ appears ([evidence](docs/evidence/recovery-cpython-stdlib.json), [how it recover
 
 | CPython `Lib/`: 1,450 files, 5,193 breaks | gramide | tree-sitter |
 |---|---:|---:|
-| declarations kept, all breaks | 98.9% | 96.3% |
-| clean breaks (nothing lost beyond the break, nothing invented) | 98.1% | 82.3% |
+| declarations kept, all breaks | 99.0% | 96.3% |
+| clean breaks (nothing lost beyond the break, nothing invented) | 98.2% | 82.3% |
 | clean breaks, `insert {` | 98.7% | 92.3% |
 | clean breaks, `delete }` | 96.7% | 73.0% |
 | clean breaks, `delete )` | 97.3% | 68.9% |
-| clean breaks, `insert (` | 99.2% | 91.1% |
+| clean breaks, `insert (` | 99.3% | 91.1% |
 
 gramide is ahead on every kind of break. What it loses is the statement that
 holds the break; what tree-sitter loses on a `}` or `)` deleted is the block
