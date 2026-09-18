@@ -93,8 +93,8 @@ C ハーネスを `-DLANG=tree_sitter_python` で組んだもの）にプロセ�
 
 | 1,000 編集、中央値 / 90 パーセンタイル | gramide | tree-sitter | 丸ごとのパース |
 |---|---:|---:|---:|
-| `argparse.py`（100 KB） | 5.4 / 8.4 µs | 44 / 65 µs | 2.6 ms |
-| `typing.py`（130 KB） | 11 / 15 µs | 112 / 129 µs | 3.1 ms |
+| `argparse.py`（100 KB） | 5.1 / 7.5 µs | 44 / 66 µs | 2.6 ms |
+| `typing.py`（130 KB） | 8.6 / 12 µs | 112 / 130 µs | 3.1 ms |
 
 各 item は ID を持ち、その item に触れない編集では変わりません。この 2,000 編集で ID が変わった item は
 ゼロでした。標準ライブラリ（`lib/python3.14` 配下の `test`・`lib2to3`・`idlelib` 以外の全 `.py`）のうち

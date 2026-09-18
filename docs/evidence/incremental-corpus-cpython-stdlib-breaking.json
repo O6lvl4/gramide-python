@@ -1,6 +1,6 @@
 {
   "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
-  "binary_sha256": "8fcb6580e201f11e4e2d68fc2285e222f311dbe4a54fe8476f2f18f3bd1b00f9",
+  "binary_sha256": "a4aeac3367d4a13e0a76651f4c0a6e0a5c72888e9f41cbc5aa5c93bd96838f50",
   "root": "/Users/o6lvl4/.local/share/qusp/store/35d774f61d63c1fd/python/lib/python3.14",
   "ext": [
     ".py"

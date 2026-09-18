@@ -3,7 +3,7 @@
  "edits": 1000,
  "seed": 7,
  "verify_every": 50,
- "gramide_sha256": "a9acb3a8d4fa972a42fcc3be00ef4cd9eb924153b33f898b5a6364de42a613b5",
+ "gramide_sha256": "a4aeac3367d4a13e0a76651f4c0a6e0a5c72888e9f41cbc5aa5c93bd96838f50",
  "tree_sitter_harness_sha256": "ee9e4f6e4bf883ae94d8b07aa511891913205092bedf67a56816033cf36d57aa",
  "files": [
   {
@@ -12,9 +12,9 @@
    "gramide": {
     "tool": "gramide",
     "edits": 1000,
-    "median_us": 5.4,
-    "p90_us": 8.4,
-    "max_us": 17.7,
+    "median_us": 5.1,
+    "p90_us": 7.5,
+    "max_us": 18.7,
     "fallbacks": 0,
     "mismatches": 0,
     "initial_mismatch": false,
@@ -27,19 +27,25 @@
      "error_near": 0
     },
     "whole_parse_samples": 20,
-    "whole_parse_median_us": 2574.9,
+    "whole_parse_median_us": 2617.6,
     "items": 1363,
     "items_renamed_median": 0,
     "items_renamed_p90": 0,
     "items_renamed_max": 0,
-    "edits_renaming_none": 1000
+    "edits_renaming_none": 1000,
+    "nodes": 14698,
+    "node_checks": 20,
+    "node_id_breaks": 0,
+    "nodes_renamed_median": 9,
+    "nodes_renamed_p90": 13,
+    "nodes_renamed_max": 19
    },
    "tree_sitter": {
     "tool": "tree-sitter",
     "edits": 1000,
     "median_us": 44.0,
-    "p90_us": 65.0,
-    "max_us": 453.0,
+    "p90_us": 66.0,
+    "max_us": 429.0,
     "errors_at_end": 0,
     "first_error_edit": -1
    }
@@ -50,9 +56,9 @@
    "gramide": {
     "tool": "gramide",
     "edits": 1000,
-    "median_us": 11.4,
-    "p90_us": 14.7,
-    "max_us": 29.5,
+    "median_us": 8.6,
+    "p90_us": 11.7,
+    "max_us": 32.5,
     "fallbacks": 0,
     "mismatches": 0,
     "initial_mismatch": false,
@@ -65,19 +71,25 @@
      "error_near": 0
     },
     "whole_parse_samples": 20,
-    "whole_parse_median_us": 3057.7,
+    "whole_parse_median_us": 3066.5,
     "items": 1549,
     "items_renamed_median": 0,
     "items_renamed_p90": 0,
     "items_renamed_max": 0,
-    "edits_renaming_none": 1000
+    "edits_renaming_none": 1000,
+    "nodes": 15962,
+    "node_checks": 20,
+    "node_id_breaks": 0,
+    "nodes_renamed_median": 7,
+    "nodes_renamed_p90": 14,
+    "nodes_renamed_max": 18
    },
    "tree_sitter": {
     "tool": "tree-sitter",
     "edits": 1000,
     "median_us": 112.0,
-    "p90_us": 129.0,
-    "max_us": 442.0,
+    "p90_us": 130.0,
+    "max_us": 451.0,
     "errors_at_end": 0,
     "first_error_edit": -1
    }
