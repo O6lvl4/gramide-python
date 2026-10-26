@@ -24,8 +24,8 @@ fn operators() -> Operators = {
   for text in operator_texts() {
     let raw = bytes.from_string(text)
     let width = bytes.len(raw)
-    list.push(all, int.bor(int.bor(bytes.get_or(raw, 0, 0), int.bshl(bytes.get_or(raw, 1, 0), 8)),
-      int.bor(int.bshl(bytes.get_or(raw, 2, 0), 16), int.bshl(width, 24))))
+    list.push(all, int.bor(int.bor(bytes.get(raw, 0) ?? 0, int.bshl(bytes.get(raw, 1) ?? 0, 8)),
+      int.bor(int.bshl(bytes.get(raw, 2) ?? 0, 16), int.bshl(width, 24))))
   }
   var start: List[Int] = list.with_capacity(OP_BYTES)
   var count: List[Int] = list.with_capacity(OP_BYTES)
@@ -59,8 +59,8 @@ fn operator_width(ops: Operators, source: Bytes, at: Int, first: Int) -> Int = {
     while width == 0 and j < n {
       let p = match list.get(ops.packed, from + j) { some(v) => v, none => 0 }
       let w = int.bshr(p, 24)
-      if (w < 2 or bytes.get_or(source, at + 1, -1) == int.band(int.bshr(p, 8), 255))
-        and (w < 3 or bytes.get_or(source, at + 2, -1) == int.band(int.bshr(p, 16), 255)) then width = w
+      if (w < 2 or bytes.get(source, at + 1) ?? -1 == int.band(int.bshr(p, 8), 255))
+        and (w < 3 or bytes.get(source, at + 2) ?? -1 == int.band(int.bshr(p, 16), 255)) then width = w
       else ()
       j = j + 1
     }
@@ -77,7 +77,7 @@ fn family_end(family: String) -> Int = if family == "fstring" then tree.T_FSTRIN
 fn make(kind: Int, start: Int, end: Int, line: Int, line_start: Int) -> tree.Token =
   tree.Token { kind: kind, start: start, end: end, line: line, col: start - line_start + 1 }
 fn newline_byte(b: Int) -> Bool = b == 10 or b == 13
-fn newline_end(source: Bytes, at: Int) -> Int = at + (if bytes.get_or(source, at, -1) == 13 and bytes.get_or(source, at + 1, -1) == 10 then 2 else 1)
+fn newline_end(source: Bytes, at: Int) -> Int = at + (if bytes.get(source, at) ?? -1 == 13 and bytes.get(source, at + 1) ?? -1 == 10 then 2 else 1)
 
 // A string prefix is one or two ASCII letters glued to an opening quote: `f"`,
 // `rt'`, `TR"""`. Reading it from the bytes keeps every ordinary identifier —
@@ -90,11 +90,11 @@ let P_FR = 2
 let P_T = 3
 let P_TR = 4
 fn prefix_code(buffer: Bytes, start: Int, end: Int) -> Int = {
-  let width = if strings.quote(bytes.get_or(buffer, end, -1)) then end - start else 0
-  let first = strings.lower(bytes.get_or(buffer, start, -1))
+  let width = if strings.quote(bytes.get(buffer, end) ?? -1) then end - start else 0
+  let first = strings.lower(bytes.get(buffer, start) ?? -1)
   if width == 1 then (if first == 102 then P_F else if first == 116 then P_T else P_NONE)
   else if width == 2 then {
-    let second = strings.lower(bytes.get_or(buffer, start + 1, -1))
+    let second = strings.lower(bytes.get(buffer, start + 1) ?? -1)
     if (first == 102 and second == 114) or (first == 114 and second == 102) then P_FR
     else if (first == 116 and second == 114) or (first == 114 and second == 116) then P_TR
     else P_NONE
@@ -144,7 +144,7 @@ fn physical_prepared(source: String, recovering: Bool, prepared: PythonTables) -
   var line = 1
   var line_start = 0
   while i < bytes.len(buffer) {
-    let b = bytes.get_or(buffer, i, -1)
+    let b = bytes.get(buffer, i) ?? -1
     let start = i
     // Retain the starting coordinates; build fallback diagnostics only in
     // the branches that use them, not for every ordinary character.
@@ -181,10 +181,10 @@ fn physical_prepared(source: String, recovering: Bool, prepared: PythonTables) -
     else if b == 10 or b == 13 then { kind = tree.T_NEWLINE; i = newline_end(buffer, i) }
     else if b == 35 then {
       kind = tree.T_COMMENT
-      while i < bytes.len(buffer) and not newline_byte(bytes.get_or(buffer, i, -1)) { i = i + 1 }
+      while i < bytes.len(buffer) and not newline_byte(bytes.get(buffer, i) ?? -1) { i = i + 1 }
     }
     else if b == 92 then {
-      if newline_byte(bytes.get_or(buffer, i + 1, -1)) then {
+      if newline_byte(bytes.get(buffer, i + 1) ?? -1) then {
         kind = tree.T_CONTINUATION
         i = newline_end(buffer, i + 1)
       } else failure = some(lex.LexError { line: first_line, col: start - first_line_start + 1, message: "unexpected character after line continuation" })
@@ -215,8 +215,8 @@ fn physical_prepared(source: String, recovering: Bool, prepared: PythonTables) -
       }
       let prefix = prefix_code(buffer, start, i)
       if prefix != P_NONE then {
-        let q = bytes.get_or(buffer, i, -1)
-        let width = if bytes.get_or(buffer, i + 1, -1) == q and bytes.get_or(buffer, i + 2, -1) == q then 3 else 1
+        let q = bytes.get(buffer, i) ?? -1
+        let width = if bytes.get(buffer, i + 1) ?? -1 == q and bytes.get(buffer, i + 2) ?? -1 == q then 3 else 1
         let family = if prefix == P_F or prefix == P_FR then "fstring" else "tstring"
         guard list.len(frames) < 200 else err(lex.LexError { line: first_line, col: start - first_line_start + 1, message: "too many nested interpolated strings" })
         if list.is_empty(frames) then {
@@ -228,7 +228,7 @@ fn physical_prepared(source: String, recovering: Bool, prepared: PythonTables) -
         i = i + width
       } else ()
     }
-    else if mode == MODE_EXPRESSION and (option.map(frame, (f) => f.depth) ?? 0) == 0 and (b == 58 or (b == 33 and bytes.get_or(buffer, i + 1, -1) != 61)) then {
+    else if mode == MODE_EXPRESSION and (option.map(frame, (f) => f.depth) ?? 0) == 0 and (b == 58 or (b == 33 and (bytes.get(buffer, i + 1) ?? -1) != 61)) then {
       kind = tree.T_PUNCT
       i = i + 1
     }
@@ -272,7 +272,7 @@ fn physical_prepared(source: String, recovering: Bool, prepared: PythonTables) -
       else {
         // one byte, compared: a three-string list built here is three
         // allocations for every bracket in every interpolation
-        let only = bytes.get_or(bytes.from_string(text), 0, -1)
+        let only = bytes.get(bytes.from_string(text), 0) ?? -1
         let opens = string.len(text) == 1 and (only == 40 or only == 91 or only == 123)
         let closes = string.len(text) == 1 and (only == 41 or only == 93 or only == 125)
         if opens or closes then {
@@ -285,7 +285,7 @@ fn physical_prepared(source: String, recovering: Bool, prepared: PythonTables) -
     // Count physical lines once, including those inside multiline strings.
     var at = start
     while at < i {
-      if newline_byte(bytes.get_or(buffer, at, -1)) then {
+      if newline_byte(bytes.get(buffer, at) ?? -1) then {
         at = newline_end(buffer, at)
         line = line + 1
         line_start = at
@@ -308,14 +308,14 @@ fn physical(source: String) -> Result[List[tree.Token], lex.LexError] = physical
 fn closes_on_line(buffer: Bytes, at: Int, quote: Int) -> Bool = {
   var i = at
   var last = -1
-  while i < bytes.len(buffer) and bytes.get_or(buffer, i, 10) != 10 and bytes.get_or(buffer, i, 13) != 13 {
-    if bytes.get_or(buffer, i, -1) == quote then last = i else ()
+  while i < bytes.len(buffer) and (bytes.get(buffer, i) ?? 10) != 10 and (bytes.get(buffer, i) ?? 13) != 13 {
+    if bytes.get(buffer, i) ?? -1 == quote then last = i else ()
     i = i + 1
   }
   var j = last + 1
   var clean = last >= 0
   while clean and j < i {
-    let b = bytes.get_or(buffer, j, 0)
+    let b = bytes.get(buffer, j) ?? 0
     clean = b == 32 or b == 9 or b == 41 or b == 93 or b == 125 or b == 44 or b == 59 or b == 58
     j = j + 1
   }

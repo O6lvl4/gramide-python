@@ -10,7 +10,7 @@ fn raw_prefix(source: Bytes, from: Int, to: Int) -> Bool = {
   var i = from
   var raw = false
   while i < to {
-    if strings.lower(bytes.get_or(source, i, -1)) == 114 then raw = true else ()
+    if strings.lower(bytes.get(source, i) ?? -1) == 114 then raw = true else ()
     i = i + 1
   }
   raw
@@ -19,15 +19,15 @@ fn raw_prefix(source: Bytes, from: Int, to: Int) -> Bool = {
 fn numeric(source: Bytes, start: Int, end: Int, raw: Bool, byte_literal: Bool, token: tree.Token) -> Result[Unit, parser.Failure] = {
   var i = start
   while i < end and not raw {
-    if bytes.get_or(source, i, -1) == 92 then {
-      let code = bytes.get_or(source, i + 1, -1)
+    if bytes.get(source, i) ?? -1 == 92 then {
+      let code = bytes.get(source, i + 1) ?? -1
       let width = if code == 120 then 2 else if not byte_literal and code == 117 then 4 else if not byte_literal and code == 85 then 8 else 0
       if width > 0 then {
         let error = parser.Failure { line: token.line, col: token.col, found: tree.token_text(source, token), expected: ["complete numeric escape within Unicode range"], note: "" }
         guard i + 2 + width <= end else err(error)
         var value = 0
         for offset in 0..<width {
-          let digit = hex(bytes.get_or(source, i + 2 + offset, -1))
+          let digit = hex(bytes.get(source, i + 2 + offset) ?? -1)
           guard digit >= 0 else err(error)
           value = value * 16 + digit
         }
@@ -45,7 +45,7 @@ fn validate(source: Bytes, buffer: TokenBuffer) -> Result[Unit, parser.Failure] 
     if token.kind == tree.T_STRING then {
       match strings.opening(source, token.start) {
         some(head) => {
-          let width = if bytes.get_or(source, head.at + 1, -1) == head.quote and bytes.get_or(source, head.at + 2, -1) == head.quote then 3 else 1
+          let width = if bytes.get(source, head.at + 1) ?? -1 == head.quote and bytes.get(source, head.at + 2) ?? -1 == head.quote then 3 else 1
           numeric(source, head.at + width, token.end - width, raw_prefix(source, token.start, head.at), head.byte_literal, token)!
         },
         none => (),
