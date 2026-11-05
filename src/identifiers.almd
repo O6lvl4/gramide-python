@@ -8,7 +8,7 @@ fn hex6(table: Bytes, at: Int) -> Int = {
   var value = 0
   var i = at
   while i < at + 6 {
-    let b = bytes.get_or(table, i, 48)
+    let b = (bytes.get(table, i) ?? 48)
     value = value * 16 + (if b <= 57 then b - 48 else b - 87)
     i = i + 1
   }
@@ -38,10 +38,10 @@ fn scan(t: Tables, source: Bytes, start: Int, line: Int, col: Int) -> Result[Int
   var i = start
   var scanning = true
   while scanning {
-    let b = bytes.get_or(source, i, -1)
+    let b = (bytes.get(source, i) ?? -1)
     if ascii_start(b) or (b >= 48 and b <= 57) or b >= 128 then {
       let width = if b < 128 then 1 else if b < 224 then 2 else if b < 240 then 3 else 4
-      let cp = if b < 128 then b else string.codepoint(bytes.to_string_lossy(bytes.slice(source, i, i + width))) ?? -1
+      let cp = if b < 128 then b else string.to_codepoint(bytes.to_string_lossy(bytes.slice(source, i, i + width))) ?? -1
       guard (if i == start then is_start(t, cp) else is_continue(t, cp)) else err(lex.LexError { line: line, col: col + i - start, message: "invalid Python identifier character" })
       i = i + width
     } else scanning = false
