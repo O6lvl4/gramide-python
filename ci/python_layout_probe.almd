@@ -6,26 +6,26 @@ import fs
 import json
 
 fn token(v: Value) -> tree.Token = tree.Token {
-  kind: tree.kind_id(json.get_string(v, "kind") ?? ""),
-  start: json.get_int(v, "start") ?? 0, end: json.get_int(v, "end") ?? 0,
-  line: json.get_int(v, "line") ?? 0, col: json.get_int(v, "col") ?? 0
+  kind: tree.kind_id(value.get_string(v, "kind") ?? ""),
+  start: value.get_int(v, "start") ?? 0, end: value.get_int(v, "end") ?? 0,
+  line: value.get_int(v, "line") ?? 0, col: value.get_int(v, "col") ?? 0
 }
 fn row(source: Bytes, t: tree.Token) -> Value = value.object([
-  ("kind", value.str(tree.kind_name(t.kind))), ("text", value.str(tree.token_text(source, t))),
+  ("kind", value.string(tree.kind_name(t.kind))), ("text", value.string(tree.token_text(source, t))),
   ("start", value.int(t.start)), ("end", value.int(t.end)),
   ("line", value.int(t.line)), ("col", value.int(t.col))
 ])
 fn check(v: Value) -> Value = {
-  let source = json.get_string(v, "source") ?? ""
-  let physical = list.map(json.get_array(v, "tokens") ?? [], (t) => token(t))
+  let source = value.get_string(v, "source") ?? ""
+  let physical = list.map(value.get_array(v, "tokens") ?? [], (t) => token(t))
   let buffer = bytes.from_string(source)
   match layout.apply(source, physical) {
     ok(ts) => value.object([("ok", value.bool(true)), ("tokens", value.array(list.map(ts, (t) => row(buffer, t))))]),
-    err(e) => value.object([("ok", value.bool(false)), ("line", value.int(e.line)), ("message", value.str(e.message))]),
+    err(e) => value.object([("ok", value.bool(false)), ("line", value.int(e.line)), ("message", value.string(e.message))]),
   }
 }
 effect fn main() -> Unit = {
   let path = list.first(env.args())!
   let input = json.parse(fs.read_text(path)!)!
-  println(json.stringify(value.array(list.map(json.get_array(input, "cases") ?? [], (c) => check(c)))))
+  println(json.stringify(value.array(list.map(value.get_array(input, "cases") ?? [], (c) => check(c)))))
 }

@@ -13,7 +13,7 @@ fn indentation(source: Bytes, at: Int) -> Indent = {
   var alternate = 0
   var scanning = true
   while scanning {
-    match bytes.get_or(source, i, -1) {
+    match (bytes.get(source, i) ?? -1) {
       32 => { width = width + 1; alternate = alternate + 1; i = i + 1 },
       9 => { width = (width / 8 + 1) * 8; alternate = alternate + 1; i = i + 1 },
       12 => { width = 0; alternate = 0; i = i + 1 },
@@ -27,7 +27,7 @@ fn indentation(source: Bytes, at: Int) -> Indent = {
 // without copying the token's text or building a list of spellings for every
 // punctuation token in the file.
 fn single_byte(buffer: Bytes, t: tree.Token) -> Int =
-  if t.end - t.start == 1 then bytes.get_or(buffer, t.start, -1) else -1
+  if t.end - t.start == 1 then (bytes.get(buffer, t.start) ?? -1) else -1
 fn opens_bracket(b: Int) -> Bool = b == 40 or b == 91 or b == 123
 fn opener_of(b: Int) -> Int = if b == 41 then 40 else if b == 93 then 91 else if b == 125 then 123 else -1
 
